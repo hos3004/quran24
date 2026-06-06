@@ -1295,3 +1295,79 @@ Notes:
 - Primary Phase 15 commit: `ff66a4a`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 15 push without rewriting published history.
+
+## Phase 16 Summary
+
+Status: completed
+
+Goal:
+
+- Harden the web runtime for long-running Android TV operation.
+- Report runtime errors before Android only sees heartbeat silence.
+- Ask native Android to reload when the web runtime is stuck in loading.
+
+What changed:
+
+- Added `client/src/channel/runtimeStability.ts`.
+- Added global web runtime `error` and `unhandledrejection` reporting.
+- Added bounded duplicate error/reload cooldowns.
+- Added `client/src/channel/renderers/ChannelErrorBoundary.tsx`.
+- Wrapped `/channel` in the error boundary.
+- Added a loading-stall watchdog inside `ChannelRuntime`.
+- Runtime errors now emit `RUNTIME_ERROR` bridge events.
+- Loading stalls and error boundaries emit `REQUEST_RELOAD` bridge events.
+- Updated `/api/channel/status` to report Phase 16, `webRuntimeErrorReporter: true`, `webRuntimeErrorBoundary: true`, `webRuntimeStallWatchdog: true`, and `boundedTelemetryRetention: true`.
+- Updated admin diagnostics and docs.
+- Added client tests for runtime stability behavior.
+
+What was intentionally not added:
+
+- No persisted crash counter yet.
+- No remote alerting or notification pipeline yet.
+- No Android-native crash upload pipeline yet.
+- No supervised asset-sync watchdog yet.
+
+## Phase 16 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+npm run test
+npm run build
+npm run lint
+cd android-tv
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.17.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+cd ..
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 16 start.
+- `git pull --ff-only`: already up to date.
+- `npm run test`: 18 backend Node tests and 28 client Vitest tests passed.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Android build passed.
+- Android lint passed.
+- API smoke on `PORT=3837` returned:
+  - `GET /api/health`: `ok: true`
+  - `GET /api/channel/status`: `phase: 16`
+  - `runtime.webRuntimeErrorReporter: true`
+  - `runtime.webRuntimeErrorBoundary: true`
+  - `runtime.webRuntimeStallWatchdog: true`
+  - `runtime.boundedTelemetryRetention: true`
+- The temporary server was stopped after smoke.
+- `Get-NetTCPConnection -LocalPort 3837 -State Listen` returned no listener after smoke.
+
+Notes:
+
+- Phase 16 complements the Android native heartbeat watchdog; it does not replace it.
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.

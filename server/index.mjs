@@ -108,7 +108,7 @@ app.get('/api/channel/status', (_req, res) => {
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 15,
+    phase: 16,
     schedule: {
       loaded: Boolean(schedule),
       activeVersion: schedule?.version ?? null,
@@ -127,6 +127,10 @@ app.get('/api/channel/status', (_req, res) => {
       androidWebViewCacheFallback: true,
       telemetryHeartbeatApi: true,
       remoteDeviceStatus: true,
+      webRuntimeErrorReporter: true,
+      webRuntimeErrorBoundary: true,
+      webRuntimeStallWatchdog: true,
+      boundedTelemetryRetention: true,
       heartbeat: 'every-5-sec'
     },
     telemetry: {

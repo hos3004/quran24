@@ -40,6 +40,10 @@ type AdminDiagnostics = {
       androidWebViewCacheFallback?: boolean;
       telemetryHeartbeatApi?: boolean;
       remoteDeviceStatus?: boolean;
+      webRuntimeErrorReporter?: boolean;
+      webRuntimeErrorBoundary?: boolean;
+      webRuntimeStallWatchdog?: boolean;
+      boundedTelemetryRetention?: boolean;
       heartbeat: string;
     };
     telemetry?: {
@@ -643,7 +647,7 @@ function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostic
       <div className="status-grid">
         <Metric label="Load State" value={loadState} />
         <Metric label="Service" value={diagnostics.health?.service ?? diagnostics.config?.service ?? 'quran24-channel'} />
-        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 14)} />
+        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 16)} />
         <Metric label="Schedule" value={String(diagnostics.channelStatus?.schedule.activeVersion ?? 'none')} />
         <Metric label="Devices Online" value={`${diagnostics.telemetry?.onlineDevices ?? diagnostics.channelStatus?.telemetry?.onlineDevices ?? 0}/${diagnostics.telemetry?.totalDevices ?? diagnostics.channelStatus?.telemetry?.totalDevices ?? 0}`} />
       </div>
@@ -1009,6 +1013,22 @@ function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagno
         <div>
           <span>Remote Device Status</span>
           <strong>{diagnostics.channelStatus?.runtime.remoteDeviceStatus ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Runtime Error Reporter</span>
+          <strong>{diagnostics.channelStatus?.runtime.webRuntimeErrorReporter ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Error Boundary</span>
+          <strong>{diagnostics.channelStatus?.runtime.webRuntimeErrorBoundary ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Stall Watchdog</span>
+          <strong>{diagnostics.channelStatus?.runtime.webRuntimeStallWatchdog ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Telemetry Retention</span>
+          <strong>{diagnostics.channelStatus?.runtime.boundedTelemetryRetention ? 'bounded' : 'pending'}</strong>
         </div>
         <div>
           <span>Devices Online</span>

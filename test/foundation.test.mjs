@@ -33,9 +33,9 @@ test('server exposes Phase 10 media and reciter endpoints', () => {
   assert.match(serverSource, /\/api\/media\/scan/);
 });
 
-test('Android TV Phase 15 telemetry and diagnostics are present and reported', () => {
+test('Android TV Phase 16 stability diagnostics are present and reported', () => {
   const serverSource = readFileSync(new URL('../server/index.mjs', import.meta.url), 'utf8');
-  assert.match(serverSource, /phase:\s*15/);
+  assert.match(serverSource, /phase:\s*16/);
   assert.match(serverSource, /androidTvShell:\s*true/);
   assert.match(serverSource, /androidBridgeReceiver:\s*true/);
   assert.match(serverSource, /androidWatchdog:\s*true/);
@@ -45,6 +45,10 @@ test('Android TV Phase 15 telemetry and diagnostics are present and reported', (
   assert.match(serverSource, /androidWebViewCacheFallback:\s*true/);
   assert.match(serverSource, /telemetryHeartbeatApi:\s*true/);
   assert.match(serverSource, /remoteDeviceStatus:\s*true/);
+  assert.match(serverSource, /webRuntimeErrorReporter:\s*true/);
+  assert.match(serverSource, /webRuntimeErrorBoundary:\s*true/);
+  assert.match(serverSource, /webRuntimeStallWatchdog:\s*true/);
+  assert.match(serverSource, /boundedTelemetryRetention:\s*true/);
   assert.match(serverSource, /\/api\/telemetry\/heartbeat/);
   assert.match(serverSource, /\/api\/telemetry\/devices/);
   assert.equal(existsSync(new URL('../android-tv/app/src/main/AndroidManifest.xml', import.meta.url)), true);

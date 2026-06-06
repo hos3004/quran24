@@ -321,6 +321,18 @@ Phase 15 now adds first-pass remote runtime telemetry:
 
 This phase intentionally keeps telemetry JSON-backed and bounded. It does not yet add signed device enrollment, Android-native direct upload, alerting, or a database-backed fleet history. Those can be added once deployment topology is clearer.
 
+## Phase 16 Guidance
+
+Phase 16 now adds web runtime stability hardening:
+
+- `client/src/channel/runtimeStability.ts` installs global `error` and `unhandledrejection` reporting.
+- Runtime errors are sent to Android through `RUNTIME_ERROR` bridge events and are also dispatched as browser events for tests.
+- `/channel` is wrapped by `ChannelErrorBoundary`, which reports React render crashes and asks Android for a WebView reload.
+- `ChannelRuntime` now has a loading-stall watchdog. If the runtime remains in the same loading state beyond the configured window, it reports the stall and sends `REQUEST_RELOAD`.
+- `/api/channel/status` now reports Phase 16, `runtime.webRuntimeErrorReporter: true`, `runtime.webRuntimeErrorBoundary: true`, `runtime.webRuntimeStallWatchdog: true`, and `runtime.boundedTelemetryRetention: true`.
+
+This phase does not replace the native Android watchdog. It adds a browser-side signal so the web runtime can ask Android for help before silence is the only failure mode. Future hardening can add persisted crash counters, remote alert rules, and supervised asset sync.
+
 ## Android TV Guidance
 
 Android phases should use:

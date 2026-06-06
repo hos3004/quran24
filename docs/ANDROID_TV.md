@@ -22,6 +22,7 @@ Current behavior:
 - WebView tries `LOAD_CACHE_ELSE_NETWORK` once before showing native recovery for main-frame load failures.
 - The web runtime stores last-good schedule and manifest payloads in localStorage and uses local clock fallback when server time is unavailable.
 - The web runtime posts remote telemetry heartbeats so `/admin?section=diagnostics` can show online/stale device status.
+- The web runtime reports uncaught errors and loading stalls through `RUNTIME_ERROR` and `REQUEST_RELOAD` bridge events.
 
 ## Build
 
@@ -74,6 +75,7 @@ Expected result:
 - Long press OK opens `Quran24 Settings`.
 - The first settings button has a visible focus state.
 - Logcat shows `Quran24TV` heartbeat messages when `/channel` is healthy.
+- Logcat shows `Web runtime requested reload` if the web runtime asks native Android to reload after a stall or error boundary.
 - Media3 logs appear when video or HLS bridge events are active.
 - Offline smoke can show `Clock Source local` when the server is unavailable after a prior successful load.
 - Diagnostics can show the emulator/device after `/channel` has posted at least one telemetry heartbeat.
@@ -94,3 +96,4 @@ During development, security software can flag actions such as Gradle wrapper ex
 - Phase 13: Media3/ExoPlayer MP4 and HLS playback for video/live stream items. Completed with Media3 `1.10.1`.
 - Phase 14: offline cache and local-first recovery. Completed for WebView cache, schedule cache, manifest cache, and local clock fallback.
 - Phase 15: remote telemetry and admin device diagnostics. Completed through WebView runtime heartbeat upload.
+- Phase 16: long-run stability hardening. Completed for web runtime error reporting, error boundary reload requests, and loading-stall watchdog.

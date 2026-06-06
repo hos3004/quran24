@@ -8,7 +8,7 @@ Quran24 is being built as a channel-first successor to the reference `livestream
 Schedule + local rendering + synchronized clock = TV-like channel
 ```
 
-The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, browser-to-Android bridge events, the Android TV fullscreen WebView shell, Android-side heartbeat watchdog, native Media3 playback for video/HLS bridge items, first-pass offline cache recovery, and runtime telemetry/device diagnostics. Deeper local asset packaging is added in later phases.
+The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, browser-to-Android bridge events, the Android TV fullscreen WebView shell, Android-side heartbeat watchdog, native Media3 playback for video/HLS bridge items, first-pass offline cache recovery, runtime telemetry/device diagnostics, and web runtime stability recovery. Deeper local asset packaging is added in later phases.
 
 ## Local Folders
 
@@ -118,6 +118,8 @@ Phase 9 adds a schedule editor under `/admin?section=schedule`. It can load the 
 Phase 10 connects `/admin?section=readers` and `/admin?section=media` to the reciter and media APIs. Reciter metadata is stored in `data/channel/reciters.json`; heavy audio remains local under ignored `data/reciters/` folders. The media scanner writes `data/channel/media-index.json` and reports missing manifest/schedule references.
 
 Phase 15 adds runtime telemetry. The `/channel` web runtime posts a compact heartbeat every 15 seconds to `/api/telemetry/heartbeat`. The server stores latest device status in ignored local file `data/channel/telemetry.json`, exposes `/api/telemetry/devices`, and the admin Diagnostics section shows online/stale devices.
+
+Phase 16 adds long-run stability hardening. The web runtime installs global error reporting, wraps `/channel` in a React error boundary, reports runtime errors to the Android bridge, and requests a native WebView reload if the runtime stays stuck in loading for too long.
 
 ## Seed Quran Assets
 

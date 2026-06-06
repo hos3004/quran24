@@ -3,6 +3,7 @@ import { calculateQuranPageFromOffset, getActiveScheduleItem, type QuranManifest
 import { emitHeartbeat, logRuntime } from '../logger';
 import { loadCachedPayload, saveCachedPayload } from '../offlineCache';
 import { setRuntimeSnapshot } from '../runtimeStore';
+import { createRuntimeProgressWatchdog, installGlobalRuntimeErrorReporter } from '../runtimeStability';
 import { postRuntimeTelemetry, type RuntimeTelemetryHeartbeat } from '../telemetry';
 import { subscribeWebRuntimeCommands, type WebRuntimeCommand } from '../bridge/androidBridge';
 import { useChannelClock } from '../hooks/useChannelClock';
@@ -33,6 +34,16 @@ export function ChannelRuntime() {
   const telemetryRef = useRef<RuntimeTelemetryHeartbeat>({
     playState: 'loading'
   });
+  const progressRef = useRef<{
+    playState: RuntimeTelemetryHeartbeat['playState'];
+    currentItemId?: string;
+    currentPage?: number;
+  }>({
+    playState: 'loading'
+  });
+  const progressWatchdogRef = useRef(createRuntimeProgressWatchdog());
+
+  useEffect(() => installGlobalRuntimeErrorReporter(), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,6 +113,11 @@ export function ChannelRuntime() {
     manifestPageCount: manifest.length,
     lastCommandType: lastCommand?.type
   };
+  progressRef.current = {
+    playState,
+    currentItemId: active?.item.id,
+    currentPage
+  };
 
   useEffect(() => {
     setRuntimeSnapshot({
@@ -142,6 +158,14 @@ export function ChannelRuntime() {
 
     sendTelemetry();
     const timer = window.setInterval(sendTelemetry, 15000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    progressWatchdogRef.current.update(progressRef.current);
+    const timer = window.setInterval(() => {
+      progressWatchdogRef.current.update(progressRef.current);
+    }, 10000);
     return () => window.clearInterval(timer);
   }, []);
 

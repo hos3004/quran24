@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AdminDashboard } from './admin/AdminDashboard';
+import { ChannelErrorBoundary } from './channel/renderers/ChannelErrorBoundary';
 import { ChannelRuntime } from './channel/renderers/ChannelRuntime';
 
 type ApiConfig = {
@@ -40,6 +41,10 @@ type ChannelStatusResponse = {
     androidWebViewCacheFallback?: boolean;
     telemetryHeartbeatApi?: boolean;
     remoteDeviceStatus?: boolean;
+    webRuntimeErrorReporter?: boolean;
+    webRuntimeErrorBoundary?: boolean;
+    webRuntimeStallWatchdog?: boolean;
+    boundedTelemetryRetention?: boolean;
     heartbeat: string;
   };
   telemetry?: {
@@ -152,7 +157,11 @@ export function App() {
   const channelPath = diagnostics.config?.channelPath ?? '/channel';
 
   if (currentPath === '/channel') {
-    return <ChannelRuntime />;
+    return (
+      <ChannelErrorBoundary>
+        <ChannelRuntime />
+      </ChannelErrorBoundary>
+    );
   }
 
   if (currentPath.startsWith('/admin')) {
