@@ -181,6 +181,7 @@ Target schedule data:
 - Current history snapshot: `data/channel/schedule-history/schedule-v2-2026-06-06T05-30-00-000Z.json`.
 - Current Quran seed manifest: `data/manifest.json`, pages 1-20.
 - Current Quran seed assets: `data/assets/hafs/001-020.webp` and matching per-page JSON files.
+- Current break slide seed assets: `data/assets/slides/dua-1.jpeg` and `data/assets/slides/dua-2.jpeg`.
 
 ## REUSABLE_COMPONENTS_FROM_REFERENCE
 

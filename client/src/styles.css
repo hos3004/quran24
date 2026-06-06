@@ -187,6 +187,30 @@ p {
     rgba(255, 255, 255, 0.04);
 }
 
+.channel-break {
+  position: relative;
+  isolation: isolate;
+}
+
+.channel-break::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: var(--break-slide);
+  background-position: center;
+  background-size: cover;
+  opacity: 0.38;
+}
+
+.channel-break::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(5, 8, 12, 0.88), rgba(5, 8, 12, 0.42));
+}
+
 .program-kicker {
   color: #e1bf77;
   font-size: clamp(16px, 1.8vw, 24px);
@@ -218,6 +242,22 @@ p {
   overflow-wrap: anywhere;
   color: #d7a86a;
   font-size: clamp(14px, 1.5vw, 20px);
+}
+
+.program-progress {
+  width: min(520px, 100%);
+  height: 8px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.program-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #e1bf77;
+  transition: width 0.4s linear;
 }
 
 .quran-page-frame {

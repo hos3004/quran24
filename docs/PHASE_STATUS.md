@@ -531,3 +531,74 @@ Notes:
 - Primary Phase 6 commit: `46f3e27`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 6 push without rewriting published history.
+
+## Phase 7 Summary
+
+Status: completed
+
+Goal:
+
+- Add break and announcement runtime behavior.
+- Support slide transitions and optional break audio.
+- Add basic spiritual filler sample data.
+
+What changed:
+
+- Added `client/src/channel/hooks/useOptionalAudio.ts`.
+- Upgraded `BreakRenderer.tsx`:
+  - schedule-offset slide selection
+  - progress bar
+  - remaining time
+  - graceful optional audio failure
+- Upgraded `AnnouncementRenderer.tsx`:
+  - progress bar
+  - remaining time
+- Seeded break slide assets:
+  - `data/assets/slides/dua-1.jpeg`
+  - `data/assets/slides/dua-2.jpeg`
+- Published seed schedule version 3 with break slide paths.
+- Added schedule history file `schedule-v3-2026-06-06T06-00-00-000Z.json`.
+
+Reference used from `livestreamquran-reference`:
+
+- Reused two reference slideshow images as break filler assets.
+- Reused the idea of scheduled visual fillers from the old slideshow system.
+
+What was intentionally not reused:
+
+- Old top-window slideshow implementation as-is.
+- Any audio file, because optional break audio is absent locally.
+- Renderer-controlled item transitions; schedule remains authoritative.
+
+## Phase 7 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 8 backend Node tests passed and 13 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Server smoke on port 3837:
+  - `GET /api/channel/schedule` returned 200 with version 3.
+  - `break-dua-001` points to `/assets/slides/dua-1.jpeg`.
+  - `GET /assets/slides/dua-1.jpeg` returned 200 with `image/jpeg`.
+  - `GET /channel` returned 200 and contained `<title>Quran24</title>`.
+
+Notes:
+
+- Optional audio intentionally reports a non-fatal error/missing state until audio assets are provided.
+
+## Phase 7 Git Update
+
+Pending commit and push.

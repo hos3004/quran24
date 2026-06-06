@@ -148,7 +148,7 @@ function RuntimeRenderer({
     case 'break':
       return <BreakRenderer item={item as BreakScheduleItem} offsetSec={offsetSec} />;
     case 'announcement':
-      return <AnnouncementRenderer item={item as AnnouncementScheduleItem} />;
+      return <AnnouncementRenderer item={item as AnnouncementScheduleItem} offsetSec={offsetSec} />;
     case 'video':
       return <VideoBridgeRenderer item={item as VideoScheduleItem} offsetSec={offsetSec} />;
     case 'live_stream':

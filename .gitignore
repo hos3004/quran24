@@ -45,3 +45,5 @@ data/assets/*
 !data/assets/.gitkeep
 !data/assets/hafs/
 !data/assets/hafs/**
+!data/assets/slides/
+!data/assets/slides/**

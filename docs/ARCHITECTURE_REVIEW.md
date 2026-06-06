@@ -161,6 +161,18 @@ Asset note:
 
 The full tracked Hafs reference set is about 123 MB. Phase 6 seeds only pages 1-20, matching the current schedule range, to avoid a large blind media dump. Full asset packaging belongs in the media-library/local-first phases.
 
+## Phase 7 Guidance
+
+Phase 7 now adds scheduled break and announcement behavior:
+
+- Break renderer selects slides by schedule offset.
+- Break renderer shows duration progress and remaining time.
+- Break optional audio uses a best-effort hook and keeps visuals alive on failure.
+- Announcement renderer shows message, progress, and remaining time.
+- Seed schedule version 3 points `break-dua-001` to committed slide assets.
+
+The schedule still controls item transitions. Renderers do not self-advance; they render the active item and offset provided by the scheduler.
+
 ## Android TV Guidance
 
 Android phases should use:

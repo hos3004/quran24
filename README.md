@@ -108,6 +108,13 @@ data/manifest.json
 
 The reference repository does not include reciter MP3 folders in Git, so the Quran renderer attempts audio alignment when audio files are present and keeps visual playback running when they are missing.
 
+Phase 7 also seeds two break slides:
+
+```text
+data/assets/slides/dua-1.jpeg
+data/assets/slides/dua-2.jpeg
+```
+
 Write APIs require an admin token:
 
 ```powershell
