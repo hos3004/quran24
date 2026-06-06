@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { prepareForSave } from '../server/channel/scheduleStore.mjs';
 import { isSafeMediaReference, parseTimeToSec, validateSchedule } from '../server/channel/scheduleValidator.mjs';
 
 function validSchedule(overrides = {}) {
@@ -99,3 +100,15 @@ test('overlapping explicit durations fail validation', () => {
   assert.match(result.errors.join('\n'), /overlaps next item/);
 });
 
+test('prepareForSave can bump schedule version for admin publishes', () => {
+  const current = validSchedule({ version: 3 });
+  const prepared = prepareForSave(validSchedule({ version: 3, status: 'published' }), current, {
+    bumpVersion: true,
+    nowIso: '2026-06-06T12:00:00.000Z',
+    publishedBy: 'admin-ui'
+  });
+
+  assert.equal(prepared.version, 4);
+  assert.equal(prepared.status, 'published');
+  assert.equal(typeof prepared.checksum, 'string');
+});

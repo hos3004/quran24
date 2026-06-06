@@ -96,7 +96,7 @@ app.get('/api/channel/status', (_req, res) => {
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 8,
+    phase: 9,
     schedule: {
       loaded: Boolean(schedule),
       activeVersion: schedule?.version ?? null,
@@ -127,9 +127,20 @@ app.get('/api/channel/schedule', (_req, res) => {
   }
 });
 
+app.post('/api/channel/schedule/validate', (req, res) => {
+  try {
+    const validation = scheduleStore.validateSchedule(req.body || {});
+    res.json({ ok: validation.ok, validation });
+  } catch (error) {
+    log('error', 'schedule_validate_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to validate schedule' });
+  }
+});
+
 app.patch('/api/channel/schedule', requireAdminWrite, (req, res) => {
   try {
     const result = scheduleStore.publishSchedule(req.body || {}, {
+      bumpVersion: true,
       publishedBy: req.get('x-admin-user') || undefined
     });
 

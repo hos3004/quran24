@@ -187,6 +187,19 @@ Phase 8 now adds the browser-side Android bridge contract for video and live str
 
 The web runtime still does not own actual MP4/HLS playback. Android Phase 13 should consume these bridge events with Media3/ExoPlayer and then send lifecycle commands back to the web runtime.
 
+## Phase 9 Guidance
+
+Phase 9 now adds the first real admin dashboard shape:
+
+- `/admin` exposes General, Readers, Channel Schedule, Media Library, and Diagnostics sections.
+- `/admin?section=schedule` loads the current schedule and edits the channel model directly.
+- The schedule editor supports Quran, break, announcement, video, and live stream items.
+- Validation calls the backend validator through `POST /api/channel/schedule/validate`.
+- Draft and publish actions use the token-protected `PATCH /api/channel/schedule`.
+- Published saves bump the schedule version and continue to create immutable history snapshots.
+
+Readers and Media Library sections are intentionally light until Phase 10 adds reciter and media scan APIs.
+
 ## Android TV Guidance
 
 Android phases should use:

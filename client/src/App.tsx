@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AdminDashboard } from './admin/AdminDashboard';
 import { ChannelRuntime } from './channel/renderers/ChannelRuntime';
 
 type ApiConfig = {
@@ -98,7 +99,7 @@ export function App() {
   }
 
   if (currentPath.startsWith('/admin')) {
-    return <DiagnosticsAdmin diagnostics={diagnostics} loadState={loadState} />;
+    return <AdminDashboard diagnostics={diagnostics} loadState={loadState} />;
   }
 
   return (
@@ -136,87 +137,6 @@ export function App() {
           <a href={channelPath}>Channel</a>
           <a href="/admin">Admin</a>
           <a href="/api/config">Config API</a>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-function DiagnosticsAdmin({
-  diagnostics,
-  loadState
-}: {
-  diagnostics: DiagnosticsState;
-  loadState: LoadState;
-}) {
-  const compatibility = diagnostics.channelStatus?.compatibility;
-
-  return (
-    <main className="shell admin-shell">
-      <section className="status-panel">
-        <div className="brand-row">
-          <div className="brand-mark" aria-hidden="true">D</div>
-          <div>
-            <h1>Diagnostics</h1>
-            <p>Quran24 admin foundation</p>
-          </div>
-        </div>
-
-        <div className="status-grid">
-          <div className="metric">
-            <span>Load State</span>
-            <strong>{loadState}</strong>
-          </div>
-          <div className="metric">
-            <span>Health</span>
-            <strong>{diagnostics.health?.ok ? 'OK' : 'Unavailable'}</strong>
-          </div>
-          <div className="metric">
-            <span>Version</span>
-            <strong>{diagnostics.health?.version ?? 'Unknown'}</strong>
-          </div>
-          <div className="metric">
-            <span>Phase</span>
-            <strong>{diagnostics.channelStatus?.phase ?? 8}</strong>
-          </div>
-        </div>
-
-        <section className="diagnostics-table" aria-label="Channel diagnostics">
-          <div>
-            <span>Server Time</span>
-            <strong>{diagnostics.health?.time ?? 'Unavailable'}</strong>
-          </div>
-          <div>
-            <span>Uptime</span>
-            <strong>{diagnostics.health ? `${diagnostics.health.uptimeSec}s` : 'Unavailable'}</strong>
-          </div>
-          <div>
-            <span>Schedule</span>
-            <strong>{diagnostics.channelStatus?.schedule.source ?? 'not-implemented-yet'}</strong>
-          </div>
-          <div>
-            <span>Heartbeat</span>
-            <strong>{diagnostics.channelStatus?.runtime.heartbeat ?? 'not-implemented-yet'}</strong>
-          </div>
-          <div>
-            <span>Compatibility APIs</span>
-            <strong>
-              {compatibility
-                ? `config:${String(compatibility.config)} manifest:${String(compatibility.manifest)} slides:${String(compatibility.slides)}`
-                : 'Unavailable'}
-            </strong>
-          </div>
-          <div>
-            <span>Errors</span>
-            <strong>{diagnostics.errors.length ? diagnostics.errors.join(' | ') : 'None'}</strong>
-          </div>
-        </section>
-
-        <div className="foundation-bar">
-          <a href="/">Home</a>
-          <a href="/channel">Channel</a>
-          <a href="/api/health">Health API</a>
-          <a href="/api/channel/status">Status API</a>
         </div>
       </section>
     </main>

@@ -68,6 +68,9 @@ Target repository:
   - `client/src/channel/hooks/useChannelClock.ts`
   - `client/src/channel/hooks/useChannelSchedule.ts`
 - Channel runtime shell: `client/src/channel/renderers/ChannelRuntime.tsx`
+- Admin dashboard:
+  - `client/src/admin/AdminDashboard.tsx`
+  - `client/src/admin/scheduleEditorUtils.ts`
 - Runtime utilities:
   - `client/src/channel/logger.ts`
   - `client/src/channel/runtimeStore.ts`
@@ -85,6 +88,7 @@ Target repository:
   - `GET /api/health`
   - `GET /api/channel/status`
   - `GET /api/channel/schedule`
+  - `POST /api/channel/schedule/validate`
   - `PATCH /api/channel/schedule`
   - `GET /api/config`
   - `GET /api/slides`

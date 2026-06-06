@@ -678,3 +678,83 @@ Notes:
 - Primary Phase 8 commit: `dfe3276`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 8 push without rewriting published history.
+
+## Phase 9 Summary
+
+Status: completed
+
+Goal:
+
+- Add a usable admin dashboard shape.
+- Allow schedule editing without hand-editing JSON.
+- Use the backend validator for schedule validation.
+- Keep draft and publish writes protected by admin token.
+
+What changed:
+
+- Added `client/src/admin/AdminDashboard.tsx`.
+- Added `client/src/admin/scheduleEditorUtils.ts`.
+- Added `client/src/admin/scheduleEditorUtils.test.ts`.
+- Replaced the old diagnostics-only `/admin` view with sections:
+  - General
+  - Readers
+  - Channel Schedule
+  - Media Library
+  - Diagnostics
+- Added schedule editor controls for:
+  - Quran items
+  - Break items
+  - Announcement items
+  - Video items
+  - Live stream items
+- Added backend validation endpoint:
+  - `POST /api/channel/schedule/validate`
+- Updated token-protected schedule PATCH flow to bump schedule version on admin saves.
+- Updated `/api/channel/status` to report Phase 9.
+- Updated README, project map, and architecture notes.
+
+Reference used from `livestreamquran-reference`:
+
+- Preserved the idea of an admin surface for operators.
+- Preserved compatibility route conventions while making schedule publishing the center of the admin workflow.
+
+What was intentionally not reused:
+
+- The old Bootstrap admin information architecture.
+- Arbitrary filesystem path editing.
+- Unauthenticated admin write behavior.
+
+## Phase 9 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; $env:ADMIN_TOKEN = "phase9-token"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 9 start.
+- `git pull --ff-only`: already up to date.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 10 backend Node tests passed and 20 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Server smoke on port 3837:
+  - `GET /api/channel/status` returned `phase: 9`.
+  - `POST /api/channel/schedule/validate` accepted the current schedule.
+  - `POST /api/channel/schedule/validate` rejected an invalid page range.
+  - Token-protected invalid `PATCH /api/channel/schedule` returned 400.
+  - `GET /admin?section=schedule` returned HTML containing `<title>Quran24</title>`.
+  - `GET /channel` returned HTML containing `<title>Quran24</title>`.
+
+Notes:
+
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.
+- In-app Browser visual verification was not available after tool discovery; server-level smoke was used.

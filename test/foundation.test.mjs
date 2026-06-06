@@ -20,3 +20,8 @@ test('server declares Phase 2 health and status endpoints', () => {
   assert.match(serverSource, /\/api\/health/);
   assert.match(serverSource, /\/api\/channel\/status/);
 });
+
+test('server exposes non-mutating schedule validation endpoint', () => {
+  const serverSource = readFileSync(new URL('../server/index.mjs', import.meta.url), 'utf8');
+  assert.match(serverSource, /\/api\/channel\/schedule\/validate/);
+});

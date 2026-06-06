@@ -96,9 +96,12 @@ export function createScheduleStore({ rootDir, logger = () => {} }) {
 
 export function prepareForSave(candidate, currentSchedule, options = {}) {
   const nowIso = options.nowIso || new Date().toISOString();
-  const nextVersion = Number.isInteger(candidate?.version)
+  const candidateVersion = Number.isInteger(candidate?.version)
     ? candidate.version
     : Math.max(1, Number(currentSchedule?.version || 0) + 1);
+  const nextVersion = options.bumpVersion
+    ? Math.max(Number(currentSchedule?.version || 0) + 1, candidateVersion)
+    : candidateVersion;
 
   const prepared = {
     ...clone(candidate || {}),
