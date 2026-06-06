@@ -1,8 +1,8 @@
 {
-  "version": 4,
+  "version": 5,
   "timezone": "Europe/Istanbul",
-  "publishedAt": "2026-06-06T13:15:00+03:00",
-  "publishedBy": "phase17-seed",
+  "publishedAt": "2026-06-06T13:55:00+03:00",
+  "publishedBy": "quran-preview-fix",
   "status": "published",
   "defaultFallbackItemId": "fallback-quran",
   "religious": {
@@ -70,6 +70,17 @@
         "durationSec": 900,
         "source": "https://example.com/live/taraweeh.m3u8",
         "startMode": "live_edge"
+      },
+      {
+        "id": "daily-quran-after-live",
+        "type": "quran",
+        "title": "Daily Quran continuation - Ahmad Al Ajmy",
+        "start": "02:20:00",
+        "reciterId": "ajmy",
+        "fromPage": 1,
+        "toPage": 20,
+        "layoutPresetId": 2,
+        "allowAutoContinue": true
       }
     ],
     "friday": [
@@ -117,5 +128,5 @@
       }
     ]
   },
-  "checksum": "3e787f02542fa6524e6a65c04f79b9cd69f92b4aa87e5a2647b4d1ac028b0128"
+  "checksum": "309cf63aee8801ab75bbcc9994d24e04c695558767819c0446e2f82f1f17e8dc"
 }

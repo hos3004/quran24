@@ -11,7 +11,7 @@ test('religious schedule summary detects Friday, Taraweeh, fillers, and Quran co
   });
 
   assert.equal(summary.ok, true);
-  assert.equal(summary.scheduleVersion, 4);
+  assert.equal(summary.scheduleVersion, 5);
   assert.equal(summary.summary.fridayScheduleConfigured, true);
   assert.equal(summary.summary.taraweehLiveStreamConfigured, true);
   assert.equal(summary.summary.spiritualFillerCount >= 3, true);
