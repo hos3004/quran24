@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import type { ChannelTheme, QuranScheduleItem } from '../types';
 import type { QuranManifestEntry } from '../scheduler';
 import { useQuranSchedulePlayback } from '../hooks/useQuranSchedulePlayback';
+import { formatArabicNumber, getQuranMetadataForPage, getSurahNameArabic, type QuranPageMetadata } from '../quranMetadata';
 import { useSlideshow } from '../hooks/useSlideshow';
 import { detectQuranContentBounds } from '../quranContentBounds';
 
@@ -16,8 +17,13 @@ type PageLayout = {
 
 const PAGE_CONTENT_GAP = 30;
 const RECITER_LABELS: Record<string, string> = {
-  ajmy: 'Ahmad Al Ajmy',
-  maher: 'Maher Al Muaiqly'
+  ajmy: 'أحمد بن علي العجمي',
+  maher: 'ماهر المعيقلي',
+  afasy: 'مشاري راشد العفاسي',
+  alafasy: 'مشاري راشد العفاسي',
+  husary: 'محمود خليل الحصري',
+  minshawi: 'محمد صديق المنشاوي',
+  sudais: 'عبد الرحمن السديس'
 };
 
 const DEFAULT_THEME: ChannelTheme = {
@@ -193,11 +199,14 @@ function QuranInfoBand({
   entry: QuranManifestEntry | null;
   reciterId: string;
 }) {
-  const surahName = readableSurahName(entry);
+  const metadata = getQuranMetadataForPage(entry?.page);
+  const surahName = readableSurahName(entry, metadata);
+  const surahNumber = readableSurahNumber(entry, metadata);
+  const juz = entry?.juz ?? metadata?.juz ?? null;
   const reciterName = RECITER_LABELS[reciterId] ?? reciterId;
 
   return (
-    <div className="quran-info-band" aria-hidden="true">
+    <div className="quran-info-band" lang="ar" dir="rtl" aria-hidden="true">
       <div className="quran-info-section quran-info-reciter">
         <span>القارئ</span>
         <strong>{reciterName}</strong>
@@ -210,12 +219,16 @@ function QuranInfoBand({
       <div className="quran-info-divider quran-info-divider-short" />
       <div className="quran-info-grid">
         <div>
+          <span>رقم السورة</span>
+          <strong>{surahNumber}</strong>
+        </div>
+        <div>
           <span>الصفحة</span>
-          <strong>{entry?.page ?? '-'}</strong>
+          <strong>{formatArabicNumber(entry?.page)}</strong>
         </div>
         <div>
           <span>الجزء</span>
-          <strong>{entry?.juz ?? '-'}</strong>
+          <strong>{formatArabicNumber(juz)}</strong>
         </div>
       </div>
     </div>
@@ -275,10 +288,29 @@ function createDustParticles(count: number): DustParticle[] {
   }));
 }
 
-function readableSurahName(entry: QuranManifestEntry | null) {
+function readableSurahName(entry: QuranManifestEntry | null, metadata: QuranPageMetadata | null) {
+  if (metadata?.surahNamesArabic.length) {
+    const prefix = metadata.surahNamesArabic.length > 1 ? 'سور' : 'سورة';
+    return `${prefix} ${metadata.surahNamesArabic.join('، ')}`;
+  }
+
+  const nameById = getSurahNameArabic(entry?.surah?.id);
+  if (nameById) return `سورة ${nameById}`;
+
   const nameArabic = entry?.surah?.nameArabic;
-  if (nameArabic && !looksMojibake(nameArabic)) return nameArabic;
+  if (nameArabic && !looksMojibake(nameArabic)) return withSurahPrefix(nameArabic);
   return entry?.surah?.nameSimple ?? '-';
+}
+
+function readableSurahNumber(entry: QuranManifestEntry | null, metadata: QuranPageMetadata | null) {
+  if (metadata?.surahIds.length) {
+    return metadata.surahIds.map((surahId) => formatArabicNumber(surahId)).join(' / ');
+  }
+  return formatArabicNumber(entry?.surah?.id);
+}
+
+function withSurahPrefix(name: string) {
+  return name.startsWith('سورة') || name.startsWith('سور ') ? name : `سورة ${name}`;
 }
 
 function looksMojibake(value: string) {
