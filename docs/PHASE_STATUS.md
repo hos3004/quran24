@@ -1562,3 +1562,10 @@ Notes:
 
 - `docs/SOAK_TEST_RESULTS.md` records that full unattended soak tests are still required before production deployment.
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.
+
+## Phase 18 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 18 commit: `023fbe6`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 18 push without rewriting published history.
