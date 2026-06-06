@@ -8,7 +8,7 @@ Quran24 is being built as a channel-first successor to the reference `livestream
 Schedule + local rendering + synchronized clock = TV-like channel
 ```
 
-The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, browser-to-Android bridge events, the Android TV fullscreen WebView shell, Android-side heartbeat watchdog, and native Media3 playback for video/HLS bridge items. Telemetry and offline cache are added in later phases.
+The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, browser-to-Android bridge events, the Android TV fullscreen WebView shell, Android-side heartbeat watchdog, native Media3 playback for video/HLS bridge items, and first-pass offline cache recovery. Telemetry and deeper local asset packaging are added in later phases.
 
 ## Local Folders
 
@@ -196,7 +196,7 @@ $adb = "C:\Users\gamer\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 & $adb -s emulator-5554 shell am start -n com.quran24.tv/.MainActivity -e channel_url http://127.0.0.1:3737/channel
 ```
 
-The TV shell is fullscreen, keeps the screen awake, loads `/channel` in WebView, stores the channel URL locally, receives bridge events from the web runtime, plays video/HLS items through Media3/ExoPlayer, watches for heartbeat stalls, and opens native settings through Menu/Settings when available or a long press on OK/DPAD_CENTER.
+The TV shell is fullscreen, keeps the screen awake, loads `/channel` in WebView, stores the channel URL locally, receives bridge events from the web runtime, plays video/HLS items through Media3/ExoPlayer, tries cached WebView content when the channel URL is unavailable, watches for heartbeat stalls, and opens native settings through Menu/Settings when available or a long press on OK/DPAD_CENTER.
 
 ## Documentation
 

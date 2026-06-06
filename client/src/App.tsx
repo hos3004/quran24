@@ -36,6 +36,8 @@ type ChannelStatusResponse = {
     androidWatchdog?: boolean;
     nativeMedia3Playback?: boolean;
     nativeHlsPlayback?: boolean;
+    webOfflineCache?: boolean;
+    androidWebViewCacheFallback?: boolean;
     heartbeat: string;
   };
   compatibility: {

@@ -291,6 +291,23 @@ Phase 13 now adds native Media3 playback for bridge-driven video and live stream
 
 The Phase 13 emulator smoke used the current Taraweeh placeholder HLS URL. Media3 correctly attempted native playback, failed because the placeholder `example.com` certificate path was not valid in the emulator, released the player, returned to WebView, and kept heartbeats flowing. This is the expected result for a placeholder URL; real HLS validation should use a valid test stream or future Taraweeh source.
 
+## Phase 14 Guidance
+
+Phase 14 now adds first-pass offline resilience:
+
+- `client/src/channel/offlineCache.ts` stores JSON payloads in localStorage.
+- `useChannelSchedule` saves last-good schedule responses and falls back to them when `/api/channel/schedule` fails.
+- `ChannelRuntime` saves last-good manifest responses and falls back to them when `/api/manifest` fails.
+- `useChannelClock` falls back to local device time when `/api/health` time sync is unavailable.
+- Channel diagnostics now show clock source and schedule source.
+- Android WebView tries `LOAD_CACHE_ELSE_NETWORK` once for main-frame load, HTTP, and SSL failures before native recovery.
+- The Express client fallback sets a short `Cache-Control` header so `/channel` HTML can participate in WebView cache recovery.
+- `/api/channel/status` now reports Phase 14, `runtime.webOfflineCache: true`, and `runtime.androidWebViewCacheFallback: true`.
+
+The offline emulator smoke loaded the app once with the server available, stopped the server, relaunched the Android TV app, and verified that the channel continued with cached schedule plus local clock. The screenshot showed `Clock Source local` and active item `live-taraweeh-placeholder`.
+
+Phase 14 does not yet package full Quran images/audio or reciter assets locally inside Android storage. It establishes runtime fallback behavior; deeper asset synchronization and storage policy can expand from this base.
+
 ## Android TV Guidance
 
 Android phases should use:

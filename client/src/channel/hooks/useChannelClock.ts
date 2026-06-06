@@ -6,6 +6,7 @@ export type ChannelClockState = {
   sample: ServerTimeSample | null;
   syncing: boolean;
   error: string | null;
+  source: 'server' | 'local' | null;
 };
 
 export function useChannelClock(resyncIntervalMs = 240000) {
@@ -13,7 +14,8 @@ export function useChannelClock(resyncIntervalMs = 240000) {
     serverNow: null,
     sample: null,
     syncing: true,
-    error: null
+    error: null,
+    source: null
   });
 
   useEffect(() => {
@@ -23,21 +25,25 @@ export function useChannelClock(resyncIntervalMs = 240000) {
       try {
         const sample = await syncServerTime();
         if (cancelled) return;
-        setState({ sample, serverNow: getServerNow(sample), syncing: false, error: null });
+        setState({ sample, serverNow: getServerNow(sample), syncing: false, error: null, source: 'server' });
       } catch (error) {
         if (cancelled) return;
+        const message = error instanceof Error ? error.message : String(error);
         setState((current) => ({
           ...current,
+          serverNow: current.serverNow ?? new Date(),
           syncing: false,
-          error: error instanceof Error ? error.message : String(error)
+          error: `Using local clock fallback: ${message}`,
+          source: current.sample ? current.source : 'local'
         }));
       }
     };
 
     const tickTimer = window.setInterval(() => {
       setState((current) => {
-        if (!current.sample) return current;
-        return { ...current, serverNow: getServerNow(current.sample) };
+        if (current.sample) return { ...current, serverNow: getServerNow(current.sample) };
+        if (current.source === 'local') return { ...current, serverNow: new Date() };
+        return current;
       });
     }, 1000);
 

@@ -36,6 +36,8 @@ type AdminDiagnostics = {
       androidWatchdog?: boolean;
       nativeMedia3Playback?: boolean;
       nativeHlsPlayback?: boolean;
+      webOfflineCache?: boolean;
+      androidWebViewCacheFallback?: boolean;
       heartbeat: string;
     };
     compatibility: { config: boolean; manifest: boolean; slides: boolean };
@@ -592,7 +594,7 @@ function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostic
       <div className="status-grid">
         <Metric label="Load State" value={loadState} />
         <Metric label="Service" value={diagnostics.health?.service ?? diagnostics.config?.service ?? 'quran24-channel'} />
-        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 13)} />
+        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 14)} />
         <Metric label="Schedule" value={String(diagnostics.channelStatus?.schedule.activeVersion ?? 'none')} />
       </div>
     </section>
@@ -915,6 +917,14 @@ function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagno
         <div>
           <span>Native HLS</span>
           <strong>{diagnostics.channelStatus?.runtime.nativeHlsPlayback ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Web Offline Cache</span>
+          <strong>{diagnostics.channelStatus?.runtime.webOfflineCache ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>WebView Cache Fallback</span>
+          <strong>{diagnostics.channelStatus?.runtime.androidWebViewCacheFallback ? 'ready' : 'pending'}</strong>
         </div>
         <div>
           <span>Compatibility APIs</span>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { calculateQuranPageFromOffset, getActiveScheduleItem, type QuranManifestEntry } from '../scheduler';
 import { emitHeartbeat, logRuntime } from '../logger';
+import { loadCachedPayload, saveCachedPayload } from '../offlineCache';
 import { setRuntimeSnapshot } from '../runtimeStore';
 import { subscribeWebRuntimeCommands, type WebRuntimeCommand } from '../bridge/androidBridge';
 import { useChannelClock } from '../hooks/useChannelClock';
@@ -19,11 +20,14 @@ import { LiveStreamBridgeRenderer } from './LiveStreamBridgeRenderer';
 import { QuranRenderer } from './QuranRenderer';
 import { VideoBridgeRenderer } from './VideoBridgeRenderer';
 
+const MANIFEST_CACHE_KEY = 'quran24:quran-manifest:v1';
+
 export function ChannelRuntime() {
   const scheduleState = useChannelSchedule();
   const clockState = useChannelClock();
   const [manifest, setManifest] = useState<QuranManifestEntry[]>([]);
   const [manifestError, setManifestError] = useState<string | null>(null);
+  const [manifestSource, setManifestSource] = useState<'network' | 'cache' | null>(null);
   const [lastCommand, setLastCommand] = useState<WebRuntimeCommand | null>(null);
 
   useEffect(() => {
@@ -34,13 +38,26 @@ export function ChannelRuntime() {
         return response.json() as Promise<QuranManifestEntry[]>;
       })
       .then((data) => {
+        saveCachedPayload(MANIFEST_CACHE_KEY, data);
         if (!cancelled) {
           setManifest(data);
           setManifestError(null);
+          setManifestSource('network');
         }
       })
       .catch((error) => {
-        if (!cancelled) setManifestError(error instanceof Error ? error.message : String(error));
+        if (!cancelled) {
+          const message = error instanceof Error ? error.message : String(error);
+          const cached = loadCachedPayload<QuranManifestEntry[]>(MANIFEST_CACHE_KEY);
+          if (cached) {
+            setManifest(cached.value);
+            setManifestError(`Using cached manifest from ${cached.savedAt}: ${message}`);
+            setManifestSource('cache');
+          } else {
+            setManifestError(message);
+            setManifestSource(null);
+          }
+        }
       });
 
     return () => {
@@ -122,6 +139,10 @@ export function ChannelRuntime() {
           <strong>{new Date().toISOString()}</strong>
         </div>
         <div>
+          <span>Clock Source</span>
+          <strong>{clockState.source ?? 'syncing'}</strong>
+        </div>
+        <div>
           <span>Active Item</span>
           <strong>{active?.item.id ?? 'none'}</strong>
         </div>
@@ -139,7 +160,11 @@ export function ChannelRuntime() {
         </div>
         <div>
           <span>Manifest</span>
-          <strong>{manifestError ? 'error' : `${manifest.length} pages`}</strong>
+          <strong>{manifestError ? `${manifestSource ?? 'error'} / ${manifest.length} pages` : `${manifest.length} pages`}</strong>
+        </div>
+        <div>
+          <span>Schedule Source</span>
+          <strong>{scheduleState.source ?? 'pending'}</strong>
         </div>
         <div>
           <span>Last Command</span>

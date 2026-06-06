@@ -56,6 +56,7 @@ class MainActivity : Activity() {
     private var lastHeartbeatElapsedMs = 0L
     private var lastWatchdogReloadElapsedMs = 0L
     private var consecutiveWatchdogReloads = 0
+    private var cacheFallbackAttempted = false
     private var activeBridgeItemId: String? = null
     private var activeBridgePage: Int? = null
     private val watchdogRunnable = object : Runnable {
@@ -157,6 +158,7 @@ class MainActivity : Activity() {
             consecutiveWatchdogReloads = 0
         }
         releaseNativePlayer(sendResumeCommand = false)
+        cacheFallbackAttempted = false
         markChannelLoading()
         root.removeAllViews()
 
@@ -292,6 +294,8 @@ class MainActivity : Activity() {
         pageLoadedAtElapsedMs = now
         lastHeartbeatElapsedMs = now
         consecutiveWatchdogReloads = 0
+        cacheFallbackAttempted = false
+        webView?.settings?.cacheMode = WebSettings.LOAD_DEFAULT
     }
 
     private fun handleBridgeMessage(message: String) {
@@ -365,6 +369,18 @@ class MainActivity : Activity() {
 
         Log.w(TAG, "Reloading channel WebView: $reason")
         currentWebView.reload()
+    }
+
+    private fun tryCachedWebViewFallback(reason: String): Boolean {
+        val currentWebView = webView ?: return false
+        if (cacheFallbackAttempted) return false
+
+        cacheFallbackAttempted = true
+        markChannelLoading()
+        currentWebView.settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+        Log.w(TAG, "Trying cached WebView fallback: $reason")
+        currentWebView.reload()
+        return true
     }
 
     private fun playNativeMedia(event: JSONObject, isLiveStream: Boolean) {
@@ -519,6 +535,7 @@ class MainActivity : Activity() {
             error: WebResourceError
         ) {
             if (request.isForMainFrame) {
+                if (tryCachedWebViewFallback("main_frame_error:${error.errorCode}")) return
                 showRecovery("Channel load failed: ${error.description}")
             }
         }
@@ -529,6 +546,7 @@ class MainActivity : Activity() {
             errorResponse: WebResourceResponse
         ) {
             if (request.isForMainFrame) {
+                if (tryCachedWebViewFallback("http_${errorResponse.statusCode}")) return
                 showRecovery("Channel returned HTTP ${errorResponse.statusCode}")
             }
         }
@@ -539,6 +557,7 @@ class MainActivity : Activity() {
             error: SslError
         ) {
             handler.cancel()
+            if (tryCachedWebViewFallback("ssl_error")) return
             showRecovery("Channel SSL error")
         }
 

@@ -100,7 +100,7 @@ app.get('/api/channel/status', (_req, res) => {
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 13,
+    phase: 14,
     schedule: {
       loaded: Boolean(schedule),
       activeVersion: schedule?.version ?? null,
@@ -115,6 +115,8 @@ app.get('/api/channel/status', (_req, res) => {
       androidWatchdog: true,
       nativeMedia3Playback: true,
       nativeHlsPlayback: true,
+      webOfflineCache: true,
+      androidWebViewCacheFallback: true,
       heartbeat: 'every-5-sec'
     },
     compatibility: {
@@ -242,6 +244,7 @@ if (existsSync(CLIENT_DIST)) {
 app.get(/.*/, (_req, res) => {
   const indexPath = join(CLIENT_DIST, 'index.html');
   if (existsSync(indexPath)) {
+    res.set('Cache-Control', 'public, max-age=60');
     res.sendFile(indexPath);
     return;
   }

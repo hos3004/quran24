@@ -1128,3 +1128,83 @@ Notes:
 - Primary Phase 13 commit: `38ec257`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 13 push without rewriting published history.
+
+## Phase 14 Summary
+
+Status: completed
+
+Goal:
+
+- Add first-pass offline resilience.
+- Keep the channel from going black when server APIs are temporarily unavailable after a prior successful load.
+- Add WebView cache fallback before native recovery.
+- Add web runtime cached schedule, cached manifest, and local clock fallback.
+
+What changed:
+
+- Added `client/src/channel/offlineCache.ts`.
+- Added offline cache tests.
+- `useChannelSchedule` now saves last-good schedule responses and uses them when `/api/channel/schedule` fails.
+- `ChannelRuntime` now saves last-good Quran manifest responses and uses them when `/api/manifest` fails.
+- `useChannelClock` now falls back to local device time when `/api/health` time sync fails.
+- Channel diagnostics now show clock source and schedule source.
+- Android WebView now tries `LOAD_CACHE_ELSE_NETWORK` once for main-frame load, HTTP, and SSL failures before native recovery.
+- Server fallback HTML now sets a short `Cache-Control` header to support WebView cache recovery.
+- Updated `/api/channel/status` to report Phase 14, `webOfflineCache: true`, and `androidWebViewCacheFallback: true`.
+- Updated admin diagnostics and docs.
+
+What was intentionally not added:
+
+- No full local Quran asset packaging yet.
+- No reciter audio sync/download manager yet.
+- No production asset eviction policy yet.
+- No telemetry upload queue yet; Phase 15 starts telemetry.
+
+## Phase 14 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+cd android-tv
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.17.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+cd ..
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 14 start.
+- `git pull --ff-only`: already up to date.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 16 backend Node tests and 22 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Android build passed.
+- Android lint passed.
+- `GET /api/channel/status` returned `phase: 14`, `runtime.webOfflineCache: true`, and `runtime.androidWebViewCacheFallback: true`.
+- Android Studio TV emulator offline smoke:
+  - device: `emulator-5554`
+  - first launch used `PORT=3837` plus `adb reverse tcp:3737 tcp:3837` to seed WebView and web localStorage caches.
+  - the server on port 3837 was stopped.
+  - the app was force-stopped and relaunched with the same channel URL.
+  - WebView loaded cached channel assets.
+  - web runtime used cached schedule and local clock fallback.
+  - screenshot showed `Clock Source local`.
+  - active item remained `live-taraweeh-placeholder`.
+  - logcat showed Media3 native playback still received the cached live-stream item.
+  - final smoke log contained no `FATAL EXCEPTION`.
+
+Notes:
+
+- Offline behavior currently depends on at least one prior successful online load.
+- Placeholder HLS still fails safely because `https://example.com/live/taraweeh.m3u8` is not a valid production stream.
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837` plus `adb reverse`.
