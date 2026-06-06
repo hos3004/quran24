@@ -21,7 +21,7 @@ export function createScheduleItem(type: ChannelItemType, index: number): Channe
       return {
         id: `quran-${suffix}`,
         type,
-        title: 'Quran recitation',
+        title: 'تلاوة قرآن',
         start,
         reciterId: 'ajmy',
         fromPage: 1,
@@ -33,7 +33,7 @@ export function createScheduleItem(type: ChannelItemType, index: number): Channe
       return {
         id: `break-${suffix}`,
         type,
-        title: 'Dua break',
+        title: 'فاصل دعاء',
         start,
         durationSec: 120,
         slides: ['/assets/slides/dua-1.jpeg']
@@ -42,7 +42,7 @@ export function createScheduleItem(type: ChannelItemType, index: number): Channe
       return {
         id: `announcement-${suffix}`,
         type,
-        title: 'Channel announcement',
+        title: 'إعلان القناة',
         start,
         durationSec: 60,
         message: 'Quran24'
@@ -51,7 +51,7 @@ export function createScheduleItem(type: ChannelItemType, index: number): Channe
       return {
         id: `video-${suffix}`,
         type,
-        title: 'Video item',
+        title: 'فيديو',
         start,
         durationSec: 300,
         source: 'https://example.com/videos/video.mp4',
@@ -61,7 +61,7 @@ export function createScheduleItem(type: ChannelItemType, index: number): Channe
       return {
         id: `live-${suffix}`,
         type,
-        title: 'Live stream',
+        title: 'بث مباشر',
         start,
         durationSec: 900,
         source: 'https://example.com/live/stream.m3u8',
@@ -84,7 +84,7 @@ export function stringifyMediaList(value?: string[]) {
 }
 
 export function formatSeconds(value?: number) {
-  if (!Number.isFinite(value)) return 'open';
+  if (!Number.isFinite(value)) return 'مفتوح';
   const seconds = Math.max(0, Math.floor(value ?? 0));
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;

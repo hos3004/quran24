@@ -303,13 +303,13 @@ export function AdminDashboard({
       <div className="admin-layout">
         <header className="admin-header">
           <div>
-            <span>Quran24 Admin</span>
+            <span>لوحة تحكم Quran24</span>
             <h1>{sectionLabel(section)}</h1>
           </div>
-          <a className="admin-live-link" href="/channel">Open Channel</a>
+          <a className="admin-live-link" href="/channel">فتح القناة</a>
         </header>
 
-        <nav className="admin-tabs" aria-label="Admin sections">
+        <nav className="admin-tabs" aria-label="أقسام لوحة التحكم">
           {adminSections.map((item) => (
             <a key={item} aria-current={item === section ? 'page' : undefined} href={`/admin?section=${item}`}>
               {sectionLabel(item)}
@@ -344,7 +344,7 @@ function ProgrammingPanel() {
   const [validation, setValidation] = useState<ScheduleValidationResult | null>(null);
   const [generated, setGenerated] = useState<ChannelSchedule | null>(null);
   const [adminToken, setAdminToken] = useState('');
-  const [message, setMessage] = useState('Loading programming template');
+  const [message, setMessage] = useState('جار تحميل نموذج البرمجة اليومية');
   const [busy, setBusy] = useState(false);
 
   const loadTemplate = useCallback(() => {
@@ -354,7 +354,7 @@ function ProgrammingPanel() {
       .then((payload) => {
         setTemplate(payload.template);
         setValidation(payload.validation);
-        setMessage('Programming template loaded');
+        setMessage('تم تحميل نموذج البرمجة اليومية');
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
       .finally(() => setBusy(false));
@@ -388,7 +388,7 @@ function ProgrammingPanel() {
   async function saveTemplate() {
     if (!template) return;
     if (!adminToken.trim()) {
-      setMessage('Admin token required');
+      setMessage('مطلوب إدخال توكن الأدمن');
       return;
     }
     setBusy(true);
@@ -401,12 +401,12 @@ function ProgrammingPanel() {
       const payload = await response.json() as ProgrammingResponse & { error?: string };
       if (!response.ok || !payload.ok) {
         setValidation(payload.validation);
-        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'Template save failed');
+        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'فشل حفظ النموذج');
         return;
       }
       setTemplate(payload.template);
       setValidation(payload.validation);
-      setMessage('Programming template saved');
+      setMessage('تم حفظ نموذج البرمجة اليومية');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -426,7 +426,7 @@ function ProgrammingPanel() {
       const payload = await response.json() as { ok: boolean; schedule: ChannelSchedule; validation: ScheduleValidationResult; error?: string };
       setGenerated(payload.schedule);
       setValidation(payload.validation);
-      setMessage(payload.ok ? `Generated ${payload.schedule.days.daily.length} schedule items` : payload.validation.errors.join(' | '));
+      setMessage(payload.ok ? `تم إنشاء ${payload.schedule.days.daily.length} عنصر في الجدول` : payload.validation.errors.join(' | '));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -436,11 +436,11 @@ function ProgrammingPanel() {
 
   async function publishGenerated() {
     if (!generated) {
-      setMessage('Generate a schedule first');
+      setMessage('أنشئ جدول اليوم أولاً');
       return;
     }
     if (!adminToken.trim()) {
-      setMessage('Admin token required');
+      setMessage('مطلوب إدخال توكن الأدمن');
       return;
     }
     setBusy(true);
@@ -452,7 +452,7 @@ function ProgrammingPanel() {
       });
       const payload = await response.json() as SaveResponse;
       setValidation(payload.validation);
-      setMessage(payload.ok ? `Published generated schedule v${payload.schedule?.version}` : payload.validation?.errors.join(' | ') || 'Publish failed');
+      setMessage(payload.ok ? `تم نشر الجدول المولّد - الإصدار ${payload.schedule?.version}` : payload.validation?.errors.join(' | ') || 'فشل النشر');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -463,7 +463,7 @@ function ProgrammingPanel() {
   if (!template) {
     return (
       <section className="admin-panel">
-        <h2>Daily Programming</h2>
+        <h2>البرمجة اليومية</h2>
         <p>{message}</p>
       </section>
     );
@@ -472,36 +472,36 @@ function ProgrammingPanel() {
   return (
     <section className="admin-panel">
       <div className="admin-panel-title">
-        <h2>Daily Programming</h2>
-        <strong>{template.blocks.length} blocks / {template.fillers.length} fillers</strong>
+        <h2>البرمجة اليومية</h2>
+        <strong>{template.blocks.length} فترات / {template.fillers.length} فواصل</strong>
       </div>
       <div className="form-grid">
         <label>
-          Timezone
+          المنطقة الزمنية
           <input value={template.timezone} onChange={(event) => updateTemplate({ timezone: event.target.value })} />
         </label>
         <label>
-          Page Cursor
+          مؤشر الصفحة
           <input type="number" min="1" max="604" value={template.pageCursor} onChange={(event) => updateTemplate({ pageCursor: Number(event.target.value) })} />
         </label>
         <label>
-          Reciter Pool
+          قائمة القراء
           <input value={template.rotation.reciters.pool.join(', ')} onChange={(event) => updatePolicy('reciters', { pool: splitIds(event.target.value) })} />
         </label>
         <label>
-          Theme Pool
+          قائمة الثيمات
           <input value={template.rotation.themes.pool.join(', ')} onChange={(event) => updatePolicy('themes', { pool: splitIds(event.target.value) })} />
         </label>
         <label className="checkbox-row">
           <input type="checkbox" checked={template.rotation.reciters.avoidImmediateRepeat} onChange={(event) => updatePolicy('reciters', { avoidImmediateRepeat: event.target.checked })} />
-          Avoid repeating reciters
+          تجنب تكرار القارئ مباشرة
         </label>
         <label className="checkbox-row">
           <input type="checkbox" checked={template.rotation.themes.avoidImmediateRepeat} onChange={(event) => updatePolicy('themes', { avoidImmediateRepeat: event.target.checked })} />
-          Avoid repeating themes
+          تجنب تكرار الثيم مباشرة
         </label>
         <label>
-          Admin Token
+          توكن الأدمن
           <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
         </label>
       </div>
@@ -517,10 +517,10 @@ function ProgrammingPanel() {
         ))}
       </div>
       <div className="admin-actions">
-        <button type="button" onClick={saveTemplate} disabled={busy}>Save Template</button>
-        <button type="button" onClick={generateSchedule} disabled={busy}>Generate Day</button>
-        <button type="button" onClick={publishGenerated} disabled={busy || !generated}>Publish Generated</button>
-        <button type="button" onClick={loadTemplate} disabled={busy}>Reload</button>
+        <button type="button" onClick={saveTemplate} disabled={busy}>حفظ النموذج</button>
+        <button type="button" onClick={generateSchedule} disabled={busy}>توليد اليوم</button>
+        <button type="button" onClick={publishGenerated} disabled={busy || !generated}>نشر الجدول المولّد</button>
+        <button type="button" onClick={loadTemplate} disabled={busy}>إعادة التحميل</button>
       </div>
       <p className="admin-message">{message}</p>
       <ValidationPanel validation={validation} />
@@ -534,7 +534,7 @@ function ScheduleEditor() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [adminToken, setAdminToken] = useState('');
   const [adminUser, setAdminUser] = useState('admin-ui');
-  const [message, setMessage] = useState('Loading schedule');
+  const [message, setMessage] = useState('جار تحميل الجدول');
   const [busy, setBusy] = useState(false);
 
   const loadSchedule = useCallback(() => {
@@ -545,7 +545,7 @@ function ScheduleEditor() {
         setSchedule(payload.schedule);
         setValidation(payload.validation);
         setSelectedItemId(payload.schedule.days.daily[0]?.id ?? null);
-        setMessage('Schedule loaded');
+        setMessage('تم تحميل الجدول');
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
       .finally(() => setBusy(false));
@@ -622,7 +622,7 @@ function ScheduleEditor() {
   async function validateCandidate(candidate = schedule) {
     if (!candidate) return null;
     setBusy(true);
-    setMessage('Validating schedule');
+    setMessage('جار فحص الجدول');
     try {
       const response = await fetch('/api/channel/schedule/validate', {
         method: 'POST',
@@ -631,7 +631,7 @@ function ScheduleEditor() {
       });
       const payload = await response.json() as ValidationResponse;
       setValidation(payload.validation);
-      setMessage(payload.validation.ok ? 'Validation passed' : 'Validation failed');
+      setMessage(payload.validation.ok ? 'تم اجتياز الفحص' : 'فشل الفحص');
       return payload.validation;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
@@ -644,7 +644,7 @@ function ScheduleEditor() {
   async function saveSchedule(status: 'draft' | 'published') {
     if (!schedule) return;
     if (!adminToken.trim()) {
-      setMessage('Admin token required');
+      setMessage('مطلوب إدخال توكن الأدمن');
       return;
     }
 
@@ -656,7 +656,7 @@ function ScheduleEditor() {
     };
 
     setBusy(true);
-    setMessage(status === 'published' ? 'Publishing schedule' : 'Saving draft');
+    setMessage(status === 'published' ? 'جار نشر الجدول' : 'جار حفظ المسودة');
     try {
       const response = await fetch('/api/channel/schedule', {
         method: 'PATCH',
@@ -671,16 +671,16 @@ function ScheduleEditor() {
       if (!response.ok || !payload.ok) {
         setValidation(payload.validation ?? {
           ok: false,
-          errors: payload.errors ?? ['Schedule save failed'],
+          errors: payload.errors ?? ['فشل حفظ الجدول'],
           warnings: payload.warnings ?? []
         });
-        setMessage(status === 'published' ? 'Publish blocked' : 'Draft save blocked');
+        setMessage(status === 'published' ? 'تم منع النشر' : 'تم منع حفظ المسودة');
         return;
       }
 
       if (payload.schedule) setSchedule(payload.schedule);
       setValidation(payload.validation);
-      setMessage(status === 'published' ? `Published version ${payload.schedule?.version}` : `Draft saved as version ${payload.schedule?.version}`);
+      setMessage(status === 'published' ? `تم نشر الإصدار ${payload.schedule?.version}` : `تم حفظ المسودة كإصدار ${payload.schedule?.version}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -691,77 +691,77 @@ function ScheduleEditor() {
   if (!schedule) {
     return (
       <section className="admin-panel">
-        <h2>Channel Schedule</h2>
+        <h2>جدول القناة</h2>
         <p>{message}</p>
       </section>
     );
   }
 
   return (
-    <section className="schedule-editor" aria-label="Channel schedule editor">
+    <section className="schedule-editor" aria-label="محرر جدول القناة">
       <div className="admin-panel schedule-general">
         <div className="admin-panel-title">
-          <h2>General</h2>
-          <strong>v{schedule.version} · {schedule.status}</strong>
+          <h2>الإعدادات العامة</h2>
+          <strong>v{schedule.version} - {statusLabel(schedule.status)}</strong>
         </div>
         <label>
-          Timezone
+          المنطقة الزمنية
           <input value={schedule.timezone} onChange={(event) => updateSchedule({ timezone: event.target.value })} />
         </label>
         <label>
-          Fallback Item
+          عنصر الاحتياط
           <input
             value={schedule.defaultFallbackItemId}
             onChange={(event) => updateSchedule({ defaultFallbackItemId: event.target.value })}
           />
         </label>
         <label>
-          Admin Token
+          توكن الأدمن
           <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
         </label>
         <label>
-          Publisher
+          الناشر
           <input value={adminUser} onChange={(event) => setAdminUser(event.target.value)} />
         </label>
         <div className="admin-actions">
-          <button type="button" onClick={() => validateCandidate()} disabled={busy}>Validate</button>
-          <button type="button" onClick={() => saveSchedule('draft')} disabled={busy}>Save Draft</button>
-          <button type="button" onClick={() => saveSchedule('published')} disabled={busy}>Publish</button>
-          <button type="button" onClick={loadSchedule} disabled={busy}>Reload</button>
+          <button type="button" onClick={() => validateCandidate()} disabled={busy}>فحص</button>
+          <button type="button" onClick={() => saveSchedule('draft')} disabled={busy}>حفظ كمسودة</button>
+          <button type="button" onClick={() => saveSchedule('published')} disabled={busy}>نشر</button>
+          <button type="button" onClick={loadSchedule} disabled={busy}>إعادة التحميل</button>
         </div>
         <p className="admin-message">{message}</p>
       </div>
 
       <div className="admin-panel schedule-preview">
         <div className="admin-panel-title">
-          <h2>Preview</h2>
-          <strong>{activePreview?.item.id ?? 'none'}</strong>
+          <h2>المعاينة</h2>
+          <strong>{activePreview?.item.id ?? 'لا يوجد'}</strong>
         </div>
         <div className="diagnostics-table compact">
           <div>
-            <span>Active Now</span>
-            <strong>{activePreview ? activePreview.item.title : 'Unavailable'}</strong>
+            <span>المعروض الآن</span>
+            <strong>{activePreview ? activePreview.item.title : 'غير متاح'}</strong>
           </div>
           <div>
-            <span>Offset</span>
-            <strong>{activePreview ? `${Math.floor(activePreview.offsetSec)}s` : 'none'}</strong>
+            <span>الإزاحة الزمنية</span>
+            <strong>{activePreview ? `${Math.floor(activePreview.offsetSec)}ث` : 'لا يوجد'}</strong>
           </div>
           <div>
-            <span>Validation</span>
-            <strong>{validation?.ok ? 'valid' : validation ? 'invalid' : 'pending'}</strong>
+            <span>الفحص</span>
+            <strong>{validationStatusLabel(validation)}</strong>
           </div>
         </div>
       </div>
 
       <div className="admin-panel schedule-list-panel">
         <div className="admin-panel-title">
-          <h2>Items</h2>
+          <h2>عناصر الجدول</h2>
           <select value={selectedDay} onChange={(event) => {
             const day = event.target.value as WeekdayKey;
             setSelectedDay(day);
             setSelectedItemId((schedule.days[day] ?? [])[0]?.id ?? null);
           }}>
-            {dayOptions.map((day) => <option key={day} value={day}>{day}</option>)}
+            {dayOptions.map((day) => <option key={day} value={day}>{dayLabel(day)}</option>)}
           </select>
         </div>
         <div className="item-type-row">
@@ -779,7 +779,7 @@ function ScheduleEditor() {
             >
               <span>{item.start}</span>
               <strong>{item.title}</strong>
-              <em>{typeLabel(item.type)} · {formatSeconds(item.durationSec)}</em>
+              <em>{typeLabel(item.type)} - {formatSeconds(item.durationSec)}</em>
             </button>
           ))}
         </div>
@@ -797,7 +797,7 @@ function ScheduleEditor() {
             onRemove={removeSelectedItem}
           />
         ) : (
-          <p>No item selected</p>
+          <p>لم يتم اختيار عنصر</p>
         )}
       </div>
 
@@ -821,7 +821,7 @@ function ItemEditor({
     <div className="item-editor">
       <div className="admin-panel-title">
         <h2>{typeLabel(item.type)}</h2>
-        <button type="button" className="danger" onClick={onRemove}>Remove</button>
+        <button type="button" className="danger" onClick={onRemove}>حذف</button>
       </div>
       <div className="form-grid">
         <label>
@@ -829,16 +829,16 @@ function ItemEditor({
           <input value={item.id} onChange={(event) => onIdChange(event.target.value)} />
         </label>
         <label>
-          Title
+          العنوان
           <input value={item.title} onChange={(event) => onChange({ title: event.target.value })} />
         </label>
         <label>
-          Start
+          وقت البداية
           <input value={item.start} onChange={(event) => onChange({ start: event.target.value })} />
         </label>
         {'durationSec' in item && (
           <label>
-            Duration Seconds
+            المدة بالثواني
             <input
               type="number"
               min="1"
@@ -852,7 +852,7 @@ function ItemEditor({
       {item.type === 'break' && <BreakFields item={item} onChange={onChange} />}
       {item.type === 'announcement' && (
         <label>
-          Message
+          الرسالة
           <textarea value={item.message} onChange={(event) => onChange({ message: event.target.value })} />
         </label>
       )}
@@ -866,28 +866,28 @@ function QuranFields({ item, onChange }: { item: QuranScheduleItem; onChange: (p
   return (
     <div className="form-grid">
       <label>
-        Reciter
+        القارئ
         <input value={item.reciterId} onChange={(event) => onChange({ reciterId: event.target.value })} />
       </label>
       <label>
-        From Page
+        من صفحة
         <input type="number" min="1" max="604" value={item.fromPage} onChange={(event) => onChange({ fromPage: Number(event.target.value) })} />
       </label>
       <label>
-        To Page
+        إلى صفحة
         <input type="number" min="1" max="604" value={item.toPage} onChange={(event) => onChange({ toPage: Number(event.target.value) })} />
       </label>
       <label>
-        Theme ID
+        معرف الثيم
         <input value={item.themeId ?? ''} onChange={(event) => onChange({ themeId: event.target.value || undefined })} />
       </label>
       <label>
-        Legacy Layout Preset
+        قالب العرض القديم
         <input type="number" min="1" value={item.layoutPresetId ?? ''} onChange={(event) => onChange({ layoutPresetId: numberOrUndefined(event.target.value) })} />
       </label>
       <label className="checkbox-row">
         <input type="checkbox" checked={Boolean(item.allowAutoContinue)} onChange={(event) => onChange({ allowAutoContinue: event.target.checked })} />
-        Auto Continue
+        متابعة تلقائية
       </label>
     </div>
   );
@@ -896,7 +896,7 @@ function QuranFields({ item, onChange }: { item: QuranScheduleItem; onChange: (p
 function ThemesPanel() {
   const [data, setData] = useState<ThemesResponse | null>(null);
   const [adminToken, setAdminToken] = useState('');
-  const [message, setMessage] = useState('Loading themes');
+  const [message, setMessage] = useState('جار تحميل الثيمات');
   const [busy, setBusy] = useState(false);
 
   const loadThemes = useCallback(() => {
@@ -905,7 +905,7 @@ function ThemesPanel() {
       .then((response) => response.json() as Promise<ThemesResponse>)
       .then((payload) => {
         setData(payload);
-        setMessage('Themes loaded');
+        setMessage('تم تحميل الثيمات');
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
       .finally(() => setBusy(false));
@@ -933,7 +933,7 @@ function ThemesPanel() {
           ...current.themes,
           {
             id,
-            name: `Theme ${current.themes.length + 1}`,
+            name: `ثيم ${current.themes.length + 1}`,
             frame: '/assets/frames/frame-preset2.png',
             background: '#000000',
             quranZoom: 0.82,
@@ -948,7 +948,7 @@ function ThemesPanel() {
   async function saveThemes() {
     if (!data) return;
     if (!adminToken.trim()) {
-      setMessage('Admin token required');
+      setMessage('مطلوب إدخال توكن الأدمن');
       return;
     }
     setBusy(true);
@@ -960,11 +960,11 @@ function ThemesPanel() {
       });
       const payload = await response.json() as ThemesResponse & { error?: string };
       if (!response.ok || !payload.ok) {
-        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'Theme save failed');
+        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'فشل حفظ الثيمات');
         return;
       }
       setData(payload);
-      setMessage('Themes saved');
+      setMessage('تم حفظ الثيمات');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -974,14 +974,14 @@ function ThemesPanel() {
 
   async function scanThemes() {
     if (!adminToken.trim()) {
-      setMessage('Admin token required');
+      setMessage('مطلوب إدخال توكن الأدمن');
       return;
     }
     setBusy(true);
     try {
       const response = await fetch('/api/themes/scan', { method: 'POST', headers: { 'x-admin-token': adminToken.trim() } });
-      if (!response.ok) throw new Error(`Theme scan failed: ${response.status}`);
-      setMessage('Theme folders scanned');
+      if (!response.ok) throw new Error(`فشل فحص مجلدات الثيمات: ${response.status}`);
+      setMessage('تم فحص مجلدات الثيمات');
       loadThemes();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
@@ -993,7 +993,7 @@ function ThemesPanel() {
   if (!data) {
     return (
       <section className="admin-panel">
-        <h2>Themes</h2>
+        <h2>الثيمات</h2>
         <p>{message}</p>
       </section>
     );
@@ -1002,18 +1002,18 @@ function ThemesPanel() {
   return (
     <section className="admin-panel">
       <div className="admin-panel-title">
-        <h2>Themes</h2>
-        <strong>{data.themes.length} available</strong>
+        <h2>الثيمات</h2>
+        <strong>{data.themes.length} متاح</strong>
       </div>
       <div className="form-grid">
         <label>
-          Active Theme
+          الثيم النشط
           <select value={data.activeThemeId} onChange={(event) => setData({ ...data, activeThemeId: event.target.value })}>
             {data.themes.map((theme) => <option key={theme.id} value={theme.id}>{theme.name}</option>)}
           </select>
         </label>
         <label>
-          Admin Token
+          توكن الأدمن
           <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
         </label>
       </div>
@@ -1025,29 +1025,29 @@ function ThemesPanel() {
               <input value={theme.id} onChange={(event) => updateTheme(theme.id, { id: event.target.value })} />
             </label>
             <label>
-              Name
+              الاسم
               <input value={theme.name} onChange={(event) => updateTheme(theme.id, { name: event.target.value })} />
             </label>
             <label>
-              Frame
+              الإطار
               <input value={theme.frame} onChange={(event) => updateTheme(theme.id, { frame: event.target.value })} />
             </label>
             <label>
-              Tags
+              الوسوم
               <input value={(theme.tags ?? []).join(', ')} onChange={(event) => updateTheme(theme.id, { tags: splitIds(event.target.value) })} />
             </label>
             <label>
-              Zoom
+              التكبير
               <input type="number" step="0.01" value={theme.quranZoom} onChange={(event) => updateTheme(theme.id, { quranZoom: Number(event.target.value) })} />
             </label>
           </div>
         ))}
       </div>
       <div className="admin-actions">
-        <button type="button" onClick={addTheme} disabled={busy}>Add Theme</button>
-        <button type="button" onClick={scanThemes} disabled={busy}>Scan Theme Folders</button>
-        <button type="button" onClick={saveThemes} disabled={busy}>Save Themes</button>
-        <button type="button" onClick={loadThemes} disabled={busy}>Reload</button>
+        <button type="button" onClick={addTheme} disabled={busy}>إضافة ثيم</button>
+        <button type="button" onClick={scanThemes} disabled={busy}>فحص مجلدات الثيمات</button>
+        <button type="button" onClick={saveThemes} disabled={busy}>حفظ الثيمات</button>
+        <button type="button" onClick={loadThemes} disabled={busy}>إعادة التحميل</button>
       </div>
       <p className="admin-message">{message}</p>
     </section>
@@ -1057,7 +1057,7 @@ function ThemesPanel() {
 function FillersPanel() {
   const [template, setTemplate] = useState<ProgrammingTemplate | null>(null);
   const [adminToken, setAdminToken] = useState('');
-  const [message, setMessage] = useState('Loading fillers');
+  const [message, setMessage] = useState('جار تحميل الفواصل');
   const [busy, setBusy] = useState(false);
 
   const loadTemplate = useCallback(() => {
@@ -1066,7 +1066,7 @@ function FillersPanel() {
       .then((response) => response.json() as Promise<ProgrammingResponse>)
       .then((payload) => {
         setTemplate(payload.template);
-        setMessage('Fillers loaded');
+        setMessage('تم تحميل الفواصل');
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
       .finally(() => setBusy(false));
@@ -1091,7 +1091,7 @@ function FillersPanel() {
         {
           id: `filler-${current.fillers.length + 1}`,
           type: 'break',
-          title: `Filler ${current.fillers.length + 1}`,
+          title: `فاصل ${current.fillers.length + 1}`,
           durationSec: 120,
           slides: ['/assets/slides/dua-1.jpeg']
         }
@@ -1102,7 +1102,7 @@ function FillersPanel() {
   async function saveFillers() {
     if (!template) return;
     if (!adminToken.trim()) {
-      setMessage('Admin token required');
+      setMessage('مطلوب إدخال توكن الأدمن');
       return;
     }
     setBusy(true);
@@ -1114,11 +1114,11 @@ function FillersPanel() {
       });
       const payload = await response.json() as ProgrammingResponse & { error?: string };
       if (!response.ok || !payload.ok) {
-        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'Fillers save failed');
+        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'فشل حفظ الفواصل');
         return;
       }
       setTemplate(payload.template);
-      setMessage('Fillers saved');
+      setMessage('تم حفظ الفواصل');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1129,7 +1129,7 @@ function FillersPanel() {
   if (!template) {
     return (
       <section className="admin-panel">
-        <h2>Fillers</h2>
+        <h2>الفواصل</h2>
         <p>{message}</p>
       </section>
     );
@@ -1139,12 +1139,12 @@ function FillersPanel() {
     <>
       <section className="admin-panel">
         <div className="admin-panel-title">
-          <h2>Fillers and Announcements</h2>
-          <strong>{template.fillers.length} configured</strong>
+          <h2>الفواصل والإعلانات</h2>
+          <strong>{template.fillers.length} معدة</strong>
         </div>
         <div className="form-grid">
           <label>
-            Admin Token
+            توكن الأدمن
             <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
           </label>
         </div>
@@ -1156,36 +1156,36 @@ function FillersPanel() {
                 <input value={filler.id} onChange={(event) => updateFiller(filler.id, { id: event.target.value })} />
               </label>
               <label>
-                Type
+                النوع
                 <select value={filler.type} onChange={(event) => updateFiller(filler.id, { type: event.target.value as ProgrammingFiller['type'] })}>
-                  <option value="break">Visual Break</option>
-                  <option value="announcement">Announcement</option>
-                  <option value="audio_message">Audio Message</option>
+                  <option value="break">فاصل مرئي</option>
+                  <option value="announcement">إعلان</option>
+                  <option value="audio_message">رسالة صوتية</option>
                 </select>
               </label>
               <label>
-                Title
+                العنوان
                 <input value={filler.title} onChange={(event) => updateFiller(filler.id, { title: event.target.value })} />
               </label>
               <label>
-                Duration
+                المدة
                 <input type="number" min="1" value={filler.durationSec} onChange={(event) => updateFiller(filler.id, { durationSec: Number(event.target.value) })} />
               </label>
               <label>
-                Slides
+                السلايدات
                 <textarea value={stringifyMediaList(filler.slides)} onChange={(event) => updateFiller(filler.id, { slides: parseMediaList(event.target.value) })} />
               </label>
               <label>
-                Audio
+                الصوت
                 <input value={filler.audio ?? ''} onChange={(event) => updateFiller(filler.id, { audio: event.target.value || undefined })} />
               </label>
             </div>
           ))}
         </div>
         <div className="admin-actions">
-          <button type="button" onClick={addFiller} disabled={busy}>Add Filler</button>
-          <button type="button" onClick={saveFillers} disabled={busy}>Save Fillers</button>
-          <button type="button" onClick={loadTemplate} disabled={busy}>Reload</button>
+          <button type="button" onClick={addFiller} disabled={busy}>إضافة فاصل</button>
+          <button type="button" onClick={saveFillers} disabled={busy}>حفظ الفواصل</button>
+          <button type="button" onClick={loadTemplate} disabled={busy}>إعادة التحميل</button>
         </div>
         <p className="admin-message">{message}</p>
       </section>
@@ -1198,11 +1198,11 @@ function BreakFields({ item, onChange }: { item: BreakScheduleItem; onChange: (p
   return (
     <>
       <label>
-        Slides
+        السلايدات
         <textarea value={stringifyMediaList(item.slides)} onChange={(event) => onChange({ slides: parseMediaList(event.target.value) })} />
       </label>
       <label>
-        Audio
+        الصوت
         <input value={item.audio ?? ''} onChange={(event) => onChange({ audio: event.target.value || undefined })} />
       </label>
     </>
@@ -1213,11 +1213,11 @@ function VideoFields({ item, onChange }: { item: VideoScheduleItem; onChange: (p
   return (
     <div className="form-grid">
       <label>
-        Source
+        المصدر
         <input value={item.source} onChange={(event) => onChange({ source: event.target.value })} />
       </label>
       <label>
-        Start Mode
+        وضع البداية
         <select value={item.startMode ?? 'timeline_offset'} onChange={(event) => onChange({ startMode: event.target.value })}>
           <option value="timeline_offset">timeline_offset</option>
           <option value="from_start">from_start</option>
@@ -1231,11 +1231,11 @@ function LiveStreamFields({ item, onChange }: { item: LiveStreamScheduleItem; on
   return (
     <div className="form-grid">
       <label>
-        Source
+        المصدر
         <input value={item.source} onChange={(event) => onChange({ source: event.target.value })} />
       </label>
       <label>
-        Start Mode
+        وضع البداية
         <select value={item.startMode ?? 'live_edge'} onChange={(event) => onChange({ startMode: event.target.value })}>
           <option value="live_edge">live_edge</option>
           <option value="timeline_offset">timeline_offset</option>
@@ -1249,7 +1249,7 @@ function OverlaysPanel() {
   const [overlays, setOverlays] = useState<ChannelOverlaySettings | null>(null);
   const [validation, setValidation] = useState<ScheduleValidationResult | null>(null);
   const [adminToken, setAdminToken] = useState('');
-  const [message, setMessage] = useState('Loading overlays');
+  const [message, setMessage] = useState('جار تحميل إعدادات الأوفرلاي');
   const [busy, setBusy] = useState(false);
 
   const loadOverlays = useCallback(() => {
@@ -1259,7 +1259,7 @@ function OverlaysPanel() {
       .then((payload) => {
         setOverlays(payload.overlays);
         setValidation(payload.validation ?? null);
-        setMessage('Overlays loaded');
+        setMessage('تم تحميل إعدادات الأوفرلاي');
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
       .finally(() => setBusy(false));
@@ -1284,7 +1284,7 @@ function OverlaysPanel() {
   async function saveOverlays() {
     if (!overlays) return;
     setBusy(true);
-    setMessage('Saving overlays');
+    setMessage('جار حفظ إعدادات الأوفرلاي');
     try {
       const response = await fetch('/api/channel/overlays', {
         method: 'PATCH',
@@ -1292,10 +1292,10 @@ function OverlaysPanel() {
         body: JSON.stringify(overlays)
       });
       const payload = await response.json() as OverlaysResponse & { error?: string };
-      if (!response.ok || !payload.ok) throw new Error(payload.error || payload.validation?.errors?.join(', ') || 'Failed to save overlays');
+      if (!response.ok || !payload.ok) throw new Error(payload.error || payload.validation?.errors?.join(', ') || 'فشل حفظ إعدادات الأوفرلاي');
       setOverlays(payload.overlays);
       setValidation(payload.validation ?? null);
-      setMessage('Overlays saved');
+      setMessage('تم حفظ إعدادات الأوفرلاي');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1306,7 +1306,7 @@ function OverlaysPanel() {
   if (!overlays) {
     return (
       <section className="admin-panel">
-        <h2>Overlays</h2>
+        <h2>الأوفرلاي</h2>
         <p>{message}</p>
       </section>
     );
@@ -1315,25 +1315,25 @@ function OverlaysPanel() {
   return (
     <section className="admin-panel">
       <div className="admin-panel-title">
-        <h2>Overlays</h2>
-        <strong>Logo, ticker, extra image</strong>
+        <h2>الأوفرلاي</h2>
+        <strong>الشعار، شريط الأخبار، صورة إضافية</strong>
       </div>
 
       <div className="form-grid">
         <label className="checkbox-row">
           <input type="checkbox" checked={overlays.logo.enabled} onChange={(event) => updateLogo({ enabled: event.target.checked })} />
-          Show channel logo
+          عرض شعار القناة
         </label>
         <label>
-          Logo Text
+          نص الشعار
           <input value={overlays.logo.text} onChange={(event) => updateLogo({ text: event.target.value })} />
         </label>
         <label>
-          Logo Subtext
+          النص الفرعي للشعار
           <input value={overlays.logo.subtext} onChange={(event) => updateLogo({ subtext: event.target.value })} />
         </label>
         <label>
-          Logo Image Path
+          مسار صورة الشعار
           <input placeholder="/assets/overlays/logo.png" value={overlays.logo.imagePath ?? ''} onChange={(event) => updateLogo({ imagePath: event.target.value })} />
         </label>
       </div>
@@ -1341,22 +1341,22 @@ function OverlaysPanel() {
       <div className="form-grid">
         <label className="checkbox-row">
           <input type="checkbox" checked={overlays.ticker.enabled} onChange={(event) => updateTicker({ enabled: event.target.checked })} />
-          Show ticker
+          عرض شريط الأخبار
         </label>
         <label className="checkbox-row">
           <input type="checkbox" checked={overlays.ticker.includeTodaySchedule} onChange={(event) => updateTicker({ includeTodaySchedule: event.target.checked })} />
-          Include today schedule
+          تضمين جدول اليوم
         </label>
         <label>
-          Welcome Text
+          نص الترحيب
           <input value={overlays.ticker.welcomeText} onChange={(event) => updateTicker({ welcomeText: event.target.value })} />
         </label>
         <label>
-          Today Prefix
+          مقدمة جدول اليوم
           <input value={overlays.ticker.todayPrefix} onChange={(event) => updateTicker({ todayPrefix: event.target.value })} />
         </label>
         <label>
-          Ticker Speed Seconds
+          سرعة الشريط بالثواني
           <input type="number" min="20" max="180" value={overlays.ticker.speedSec} onChange={(event) => updateTicker({ speedSec: Number(event.target.value) })} />
         </label>
       </div>
@@ -1364,34 +1364,34 @@ function OverlaysPanel() {
       <div className="form-grid">
         <label className="checkbox-row">
           <input type="checkbox" checked={overlays.extraImage.enabled} onChange={(event) => updateExtraImage({ enabled: event.target.checked })} />
-          Show extra image
+          عرض صورة إضافية
         </label>
         <label>
-          Extra Image Path
+          مسار الصورة الإضافية
           <input placeholder="/assets/overlays/qr.png" value={overlays.extraImage.imagePath ?? ''} onChange={(event) => updateExtraImage({ imagePath: event.target.value })} />
         </label>
         <label>
-          Position
+          الموضع
           <select value={overlays.extraImage.position} onChange={(event) => updateExtraImage({ position: event.target.value as ChannelOverlaySettings['extraImage']['position'] })}>
-            <option value="bottom-right">Bottom right</option>
-            <option value="bottom-left">Bottom left</option>
-            <option value="top-right">Top right</option>
-            <option value="top-left">Top left</option>
+            <option value="bottom-right">أسفل اليمين</option>
+            <option value="bottom-left">أسفل اليسار</option>
+            <option value="top-right">أعلى اليمين</option>
+            <option value="top-left">أعلى اليسار</option>
           </select>
         </label>
         <label>
-          Width px
+          العرض بالبكسل
           <input type="number" min="96" max="520" value={overlays.extraImage.widthPx} onChange={(event) => updateExtraImage({ widthPx: Number(event.target.value) })} />
         </label>
         <label>
-          Admin Token
+          توكن الأدمن
           <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
         </label>
       </div>
 
       <div className="admin-actions">
-        <button type="button" onClick={saveOverlays} disabled={busy}>Save Overlays</button>
-        <button type="button" onClick={loadOverlays} disabled={busy}>Reload</button>
+        <button type="button" onClick={saveOverlays} disabled={busy}>حفظ الأوفرلاي</button>
+        <button type="button" onClick={loadOverlays} disabled={busy}>إعادة التحميل</button>
       </div>
       <ValidationPanel validation={validation} />
       <p className="admin-message">{message}</p>
@@ -1403,11 +1403,11 @@ function ValidationPanel({ validation }: { validation: ScheduleValidationResult 
   return (
     <div className="admin-panel validation-panel">
       <div className="admin-panel-title">
-        <h2>Validation</h2>
-        <strong>{validation?.ok ? 'valid' : validation ? 'invalid' : 'pending'}</strong>
+        <h2>الفحص</h2>
+        <strong>{validationStatusLabel(validation)}</strong>
       </div>
       <div className="validation-list">
-        {(validation?.errors.length ? validation.errors : ['No validation errors']).map((error) => (
+        {(validation?.errors.length ? validation.errors : ['لا توجد أخطاء في الفحص']).map((error) => (
           <p key={error} className={validation?.errors.length ? 'error-text' : undefined}>{error}</p>
         ))}
         {validation?.warnings.map((warning) => <p key={warning}>{warning}</p>)}
@@ -1419,7 +1419,7 @@ function ValidationPanel({ validation }: { validation: ScheduleValidationResult 
 function ReadersPanel() {
   const [data, setData] = useState<RecitersResponse | null>(null);
   const [adminToken, setAdminToken] = useState('');
-  const [message, setMessage] = useState('Loading reciters');
+  const [message, setMessage] = useState('جار تحميل القراء');
   const [busy, setBusy] = useState(false);
 
   const loadReciters = useCallback(() => {
@@ -1428,7 +1428,7 @@ function ReadersPanel() {
       .then((response) => response.json() as Promise<RecitersResponse>)
       .then((payload) => {
         setData(payload);
-        setMessage('Reciters loaded');
+        setMessage('تم تحميل القراء');
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
       .finally(() => setBusy(false));
@@ -1461,7 +1461,7 @@ function ReadersPanel() {
           ...current.reciters,
           {
             id,
-            name: `Reciter ${current.reciters.length + 1}`,
+            name: `قارئ ${current.reciters.length + 1}`,
             folderName: id,
             audioDir: `data/reciters/${id}`
           }
@@ -1485,12 +1485,12 @@ function ReadersPanel() {
   async function saveReciters() {
     if (!data) return;
     if (!adminToken.trim()) {
-      setMessage('Admin token required');
+      setMessage('مطلوب إدخال توكن الأدمن');
       return;
     }
 
     setBusy(true);
-    setMessage('Saving reciters');
+    setMessage('جار حفظ القراء');
     try {
       const response = await fetch('/api/reciters', {
         method: 'PATCH',
@@ -1506,11 +1506,11 @@ function ReadersPanel() {
       });
       const payload = await response.json() as RecitersResponse & { validation?: ScheduleValidationResult; error?: string };
       if (!response.ok || !payload.ok) {
-        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'Reciter save failed');
+        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'فشل حفظ القراء');
         return;
       }
       setData(payload);
-      setMessage('Reciters saved');
+      setMessage('تم حفظ القراء');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1521,7 +1521,7 @@ function ReadersPanel() {
   if (!data) {
     return (
       <section className="admin-panel">
-        <h2>Readers</h2>
+        <h2>القراء</h2>
         <p>{message}</p>
       </section>
     );
@@ -1530,16 +1530,16 @@ function ReadersPanel() {
   return (
     <section className="admin-panel">
       <div className="admin-panel-title">
-        <h2>Readers</h2>
-        <strong>{data.reciters.length} configured</strong>
+        <h2>القراء</h2>
+        <strong>{data.reciters.length} معد</strong>
       </div>
       <div className="form-grid">
         <label>
-          Audio Root
+          مسار مكتبة الصوت
           <input value={data.audioRootDir} readOnly />
         </label>
         <label>
-          Admin Token
+          توكن الأدمن
           <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
         </label>
       </div>
@@ -1553,28 +1553,28 @@ function ReadersPanel() {
                 checked={data.activeReciterId === reciter.id}
                 onChange={() => setData({ ...data, activeReciterId: reciter.id })}
               />
-              Active
+              نشط
             </label>
             <label>
               ID
               <input value={reciter.id} onChange={(event) => updateReciter(reciter.id, { id: event.target.value })} />
             </label>
             <label>
-              Name
+              الاسم
               <input value={reciter.name} onChange={(event) => updateReciter(reciter.id, { name: event.target.value })} />
             </label>
             <label>
-              Folder
+              المجلد
               <input value={reciter.folderName} onChange={(event) => updateReciter(reciter.id, { folderName: event.target.value })} />
             </label>
-            <button type="button" className="danger" onClick={() => removeReciter(reciter.id)}>Remove</button>
+            <button type="button" className="danger" onClick={() => removeReciter(reciter.id)}>حذف</button>
           </div>
         ))}
       </div>
       <div className="admin-actions">
-        <button type="button" onClick={addReciter} disabled={busy}>Add Reader</button>
-        <button type="button" onClick={saveReciters} disabled={busy}>Save Readers</button>
-        <button type="button" onClick={loadReciters} disabled={busy}>Reload</button>
+        <button type="button" onClick={addReciter} disabled={busy}>إضافة قارئ</button>
+        <button type="button" onClick={saveReciters} disabled={busy}>حفظ القراء</button>
+        <button type="button" onClick={loadReciters} disabled={busy}>إعادة التحميل</button>
       </div>
       <p className="admin-message">{message}</p>
     </section>
@@ -1584,7 +1584,7 @@ function ReadersPanel() {
 function MediaPanel() {
   const [media, setMedia] = useState<MediaIndex | null>(null);
   const [adminToken, setAdminToken] = useState('');
-  const [message, setMessage] = useState('Loading media library');
+  const [message, setMessage] = useState('جار تحميل مكتبة الوسائط');
   const [busy, setBusy] = useState(false);
 
   const loadMedia = useCallback(() => {
@@ -1593,7 +1593,7 @@ function MediaPanel() {
       .then((response) => response.json() as Promise<MediaIndex>)
       .then((payload) => {
         setMedia(payload);
-        setMessage('Media library loaded');
+        setMessage('تم تحميل مكتبة الوسائط');
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
       .finally(() => setBusy(false));
@@ -1605,12 +1605,12 @@ function MediaPanel() {
 
   async function scanMedia() {
     if (!adminToken.trim()) {
-      setMessage('Admin token required');
+      setMessage('مطلوب إدخال توكن الأدمن');
       return;
     }
 
     setBusy(true);
-    setMessage('Scanning media');
+    setMessage('جار فحص الوسائط');
     try {
       const response = await fetch('/api/media/scan', {
         method: 'POST',
@@ -1618,11 +1618,11 @@ function MediaPanel() {
       });
       const payload = await response.json() as MediaIndex & { error?: string };
       if (!response.ok || !payload.ok) {
-        setMessage(payload.error || 'Media scan failed');
+        setMessage(payload.error || 'فشل فحص الوسائط');
         return;
       }
       setMedia(payload);
-      setMessage('Media scan complete');
+      setMessage('تم فحص الوسائط');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1633,38 +1633,38 @@ function MediaPanel() {
   return (
     <section className="admin-panel">
       <div className="admin-panel-title">
-        <h2>Media Library</h2>
-        <strong>{media?.generatedAt ? new Date(media.generatedAt).toLocaleString() : 'pending'}</strong>
+        <h2>مكتبة الوسائط</h2>
+        <strong>{media?.generatedAt ? new Date(media.generatedAt).toLocaleString() : 'بانتظار الفحص'}</strong>
       </div>
       <div className="form-grid">
         <label>
-          Admin Token
+          توكن الأدمن
           <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
         </label>
       </div>
       <div className="admin-actions">
-        <button type="button" onClick={scanMedia} disabled={busy}>Scan Media</button>
-        <button type="button" onClick={loadMedia} disabled={busy}>Reload</button>
+        <button type="button" onClick={scanMedia} disabled={busy}>فحص الوسائط</button>
+        <button type="button" onClick={loadMedia} disabled={busy}>إعادة التحميل</button>
       </div>
       {media ? (
         <>
           <div className="status-grid">
-            <Metric label="Quran Images" value={String(media.summary.quranPageImages)} />
-            <Metric label="Reciter Audio" value={String(media.summary.reciterAudio)} />
-            <Metric label="Slides" value={String(media.summary.breakSlides)} />
-            <Metric label="Missing" value={String(media.summary.missingFiles)} />
+            <Metric label="صور المصحف" value={String(media.summary.quranPageImages)} />
+            <Metric label="صوت القراء" value={String(media.summary.reciterAudio)} />
+            <Metric label="السلايدات" value={String(media.summary.breakSlides)} />
+            <Metric label="ملفات ناقصة" value={String(media.summary.missingFiles)} />
           </div>
           <div className="diagnostics-table compact">
             {media.categories.reciterAudio.map((reciter) => (
               <div key={reciter.reciterId}>
                 <span>{reciter.reciterId}</span>
-                <strong>{reciter.fileCount} audio files</strong>
+                <strong>{reciter.fileCount} ملف صوتي</strong>
               </div>
             ))}
             {media.categories.reciterAudio.length === 0 && (
               <div>
-                <span>Reciter Audio</span>
-                <strong>0 audio files</strong>
+                <span>صوت القراء</span>
+                <strong>0 ملف صوتي</strong>
               </div>
             )}
           </div>
@@ -1675,7 +1675,7 @@ function MediaPanel() {
                 <span>{missing.path}</span>
               </p>
             ))}
-            {media.missingFiles.length > 12 && <p>{media.missingFiles.length - 12} more missing files</p>}
+            {media.missingFiles.length > 12 && <p>{media.missingFiles.length - 12} ملف ناقص آخر</p>}
           </div>
         </>
       ) : (
@@ -1895,19 +1895,51 @@ function getRequestedSection(): AdminSection {
 
 function sectionLabel(section: AdminSection) {
   const labels: Record<AdminSection, string> = {
-    programming: 'Daily Programming',
-    readers: 'Readers',
-    themes: 'Themes',
-    overlays: 'Overlays',
-    fillers: 'Fillers',
-    schedule: 'Schedule and Publish',
-    diagnostics: 'Diagnostics'
+    programming: 'البرمجة اليومية',
+    readers: 'القراء',
+    themes: 'الثيمات',
+    overlays: 'الأوفرلاي',
+    fillers: 'الفواصل والإعلانات',
+    schedule: 'الجدولة والنشر',
+    diagnostics: 'التشخيص'
   };
   return labels[section];
 }
 
 function typeLabel(type: ChannelScheduleItem['type']) {
-  return type.replace('_', ' ');
+  const labels: Record<ChannelScheduleItem['type'], string> = {
+    quran: 'تلاوة قرآن',
+    break: 'فاصل مرئي',
+    announcement: 'إعلان',
+    video: 'فيديو',
+    live_stream: 'بث مباشر',
+    image_slideshow: 'عرض صور',
+    audio_message: 'رسالة صوتية'
+  };
+  return labels[type];
+}
+
+function dayLabel(day: WeekdayKey) {
+  const labels: Record<WeekdayKey, string> = {
+    daily: 'يومي',
+    monday: 'الاثنين',
+    tuesday: 'الثلاثاء',
+    wednesday: 'الأربعاء',
+    thursday: 'الخميس',
+    friday: 'الجمعة',
+    saturday: 'السبت',
+    sunday: 'الأحد'
+  };
+  return labels[day];
+}
+
+function statusLabel(status: ChannelSchedule['status']) {
+  return status === 'published' ? 'منشور' : 'مسودة';
+}
+
+function validationStatusLabel(validation: ScheduleValidationResult | null) {
+  if (!validation) return 'بانتظار الفحص';
+  return validation.ok ? 'سليم' : 'به أخطاء';
 }
 
 function numberOrUndefined(value: string) {
