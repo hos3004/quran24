@@ -111,9 +111,18 @@ function walk(dir, visit) {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
       walk(fullPath, visit);
-    } else if (entry.isFile()) {
+    } else if (entry.isFile() || isSymlinkToFile(fullPath, entry)) {
       visit(fullPath);
     }
+  }
+}
+
+function isSymlinkToFile(filePath, entry) {
+  if (!entry.isSymbolicLink()) return false;
+  try {
+    return statSync(filePath).isFile();
+  } catch {
+    return false;
   }
 }
 

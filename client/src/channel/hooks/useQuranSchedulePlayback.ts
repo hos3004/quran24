@@ -184,6 +184,31 @@ export function useQuranSchedulePlayback(
   }, []);
 
   useEffect(() => {
+    const resumePlayback = () => {
+      const audio = audioRef.current;
+      if (!audio?.src || !audio.paused) return;
+      audio.muted = false;
+      audio.volume = 1;
+      audio.play()
+        .then(() => {
+          setAudioState('playing');
+          setAudioError(null);
+        })
+        .catch((error: unknown) => {
+          setAudioState('error');
+          setAudioError(error instanceof Error ? error.message : String(error));
+        });
+    };
+
+    window.addEventListener('pointerdown', resumePlayback);
+    window.addEventListener('keydown', resumePlayback);
+    return () => {
+      window.removeEventListener('pointerdown', resumePlayback);
+      window.removeEventListener('keydown', resumePlayback);
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       const audio = audioRef.current;
       audio?.pause();

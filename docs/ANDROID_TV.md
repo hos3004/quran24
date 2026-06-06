@@ -44,9 +44,17 @@ The debug APK is written to:
 D:\2025 apps\quran24\android-tv\app\build\outputs\apk\debug\app-debug.apk
 ```
 
+## Production Channel
+
+The default Android TV channel URL is:
+
+```text
+https://quran.darboslah.com/channel
+```
+
 ## Local Emulator Smoke
 
-The default Android emulator host URL is:
+For emulator smoke tests, override the channel URL with the local Android emulator host URL:
 
 ```text
 http://10.0.2.2:3737/channel

@@ -192,13 +192,13 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\gradlew.bat lintDebug
 ```
 
-Default channel URL:
+Production default channel URL:
 
 ```text
-http://10.0.2.2:3737/channel
+https://quran.darboslah.com/channel
 ```
 
-For the local development environment where port `3737` is already occupied, run Quran24 on `3837` and bridge it to the emulator:
+For local emulator development, override the channel URL through the launch intent or the hidden TV settings screen. If port `3737` is already occupied, run Quran24 on `3837` and bridge it to the emulator:
 
 ```powershell
 $env:PORT = "3837"

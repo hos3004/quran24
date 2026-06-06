@@ -444,6 +444,14 @@ app.use('/assets', express.static(join(ROOT, 'data', 'assets'), {
   maxAge: '5m'
 }));
 
+app.use('/assets', (req, res) => {
+  res.status(404).json({
+    ok: false,
+    error: 'Asset not found',
+    path: req.originalUrl
+  });
+});
+
 app.get('/api/config', (_req, res) => {
   const config = readJsonIfExists(join(ROOT, 'data', 'config.json'), defaultConfig);
   res.json(config);

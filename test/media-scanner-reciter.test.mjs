@@ -10,8 +10,9 @@ test('media scanner summarizes seeded assets and missing audio', () => {
   const index = buildMediaIndex(ROOT);
   assert.equal(index.summary.quranPageImages, 20);
   assert.equal(index.summary.quranPageMetadata, 20);
+  assert.equal(index.summary.reciterAudio, 3);
   assert.equal(index.summary.breakSlides, 2);
-  assert.equal(index.missingFiles.some((missing) => missing.path.includes('/assets/reciters/ajmy/Page001.mp3')), true);
+  assert.equal(index.missingFiles.some((missing) => missing.path.includes('/assets/reciters/ajmy/Page004.mp3')), true);
 });
 
 test('media scanner rejects unsafe asset references', () => {

@@ -46,7 +46,6 @@ export function QuranRenderer({
   const playback = useQuranSchedulePlayback(item, manifest, offsetSec);
   const page = playback.pageOffset?.page ?? item.fromPage;
   const windowRef = useRef<HTMLDivElement | null>(null);
-  const lastTranslateYRef = useRef<number | null>(null);
   const initializedPageRef = useRef<string | null>(null);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [entryInitialY, setEntryInitialY] = useState<number | null>(null);
@@ -90,22 +89,16 @@ export function QuranRenderer({
     if (!currLayout || !currKey || !windowSize.height) return;
     if (initializedPageRef.current === currKey) return;
 
-    const initialY = lastTranslateYRef.current !== null && prevLayout
-      ? lastTranslateYRef.current + offsetPrevToCurr
-      : windowSize.height - currLayout.contentY;
-
     initializedPageRef.current = currKey;
-    setEntryInitialY(initialY);
-    lastTranslateYRef.current = initialY;
-  }, [currKey, currLayout, offsetPrevToCurr, prevLayout, windowSize.height]);
+    setEntryInitialY(getReadingStartY(currLayout, windowSize.height));
+  }, [currKey, currLayout, windowSize.height]);
 
   const translateY = useMemo(() => {
     if (!currLayout || !windowSize.height) return 0;
-    const initialY = entryInitialY ?? windowSize.height - currLayout.contentY;
-    const endY = windowSize.height * 0.6 - (currLayout.contentY + currLayout.contentH);
-    const nextTranslateY = initialY + (endY - initialY) * playback.audioProgress;
-    lastTranslateYRef.current = nextTranslateY;
-    return nextTranslateY;
+    const initialY = entryInitialY ?? getReadingStartY(currLayout, windowSize.height);
+    const endY = getReadingEndY(currLayout, windowSize.height);
+    const progress = Math.min(1, Math.max(0, playback.audioProgress));
+    return initialY + (endY - initialY) * progress;
   }, [currLayout, entryInitialY, playback.audioProgress, windowSize.height]);
 
   const pageStyle = {
@@ -330,6 +323,20 @@ function useQuranPageLayout(entry: QuranManifestEntry | null, windowWidth: numbe
 
 function getPageAdvanceOffset(current: PageLayout, next: PageLayout) {
   return Math.max(0, current.contentY + current.contentH + PAGE_CONTENT_GAP - next.contentY);
+}
+
+function getReadingStartY(layout: PageLayout, windowHeight: number) {
+  if (layout.contentH <= windowHeight) return getCenteredReadingY(layout, windowHeight);
+  return -layout.contentY;
+}
+
+function getReadingEndY(layout: PageLayout, windowHeight: number) {
+  if (layout.contentH <= windowHeight) return getCenteredReadingY(layout, windowHeight);
+  return windowHeight - (layout.contentY + layout.contentH);
+}
+
+function getCenteredReadingY(layout: PageLayout, windowHeight: number) {
+  return (windowHeight - layout.contentH) / 2 - layout.contentY;
 }
 
 function QuranFlowPage({
