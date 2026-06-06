@@ -1371,3 +1371,10 @@ Notes:
 
 - Phase 16 complements the Android native heartbeat watchdog; it does not replace it.
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.
+
+## Phase 16 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 16 commit: `cace903`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 16 push without rewriting published history.
