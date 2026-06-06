@@ -15,6 +15,10 @@ type PageLayout = {
 };
 
 const PAGE_CONTENT_GAP = 30;
+const RECITER_LABELS: Record<string, string> = {
+  ajmy: 'Ahmad Al Ajmy',
+  maher: 'Maher Al Muaiqly'
+};
 
 const DEFAULT_THEME: ChannelTheme = {
   id: 'classic-gold',
@@ -137,6 +141,7 @@ export function QuranRenderer({
           aria-hidden="true"
           draggable={false}
         />
+        <QuranInfoBand entry={playback.currentEntry} reciterId={item.reciterId} />
       </div>
 
       <div className="quran-runtime-status" aria-hidden="true">
@@ -160,10 +165,15 @@ export function QuranRenderer({
 }
 
 function QuranSlideWindow({ slides }: { slides: string[] }) {
-  const { currentSrc, nextSrc, transitioning } = useSlideshow(slides);
+  const { currentSrc, nextSrc, transitioning } = useSlideshow(slides, 18000, 3000);
+  const particles = useMemo(() => createDustParticles(120), []);
 
   if (slides.length === 0 || !currentSrc) {
-    return <div className="quran-slide-window quran-slide-window-empty" aria-hidden="true" />;
+    return (
+      <div className="quran-slide-window quran-slide-window-empty" aria-hidden="true">
+        <QuranParticles particles={particles} />
+      </div>
+    );
   }
 
   return (
@@ -178,8 +188,108 @@ function QuranSlideWindow({ slides }: { slides: string[] }) {
         />
       )}
       <div className="quran-slide-shade" />
+      <QuranParticles particles={particles} />
     </div>
   );
+}
+
+function QuranInfoBand({
+  entry,
+  reciterId
+}: {
+  entry: QuranManifestEntry | null;
+  reciterId: string;
+}) {
+  const surahName = readableSurahName(entry);
+  const reciterName = RECITER_LABELS[reciterId] ?? reciterId;
+
+  return (
+    <div className="quran-info-band" aria-hidden="true">
+      <div className="quran-info-section quran-info-reciter">
+        <span>القارئ</span>
+        <strong>{reciterName}</strong>
+      </div>
+      <div className="quran-info-divider" />
+      <div className="quran-info-section quran-info-surah">
+        <span>السورة</span>
+        <strong>{surahName}</strong>
+      </div>
+      <div className="quran-info-divider quran-info-divider-short" />
+      <div className="quran-info-grid">
+        <div>
+          <span>الصفحة</span>
+          <strong>{entry?.page ?? '-'}</strong>
+        </div>
+        <div>
+          <span>الجزء</span>
+          <strong>{entry?.juz ?? '-'}</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type DustParticle = {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  duration: number;
+  tx: number;
+  ty: number;
+};
+
+function QuranParticles({ particles }: { particles: DustParticle[] }) {
+  return (
+    <div className="quran-particles">
+      {particles.map((particle) => (
+        <span
+          key={particle.id}
+          className="quran-particle"
+          style={{
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            width: particle.size,
+            height: particle.size,
+            '--particle-x': `${particle.tx}px`,
+            '--particle-y': `${particle.ty}px`,
+            animationDelay: `${particle.delay}s`,
+            animationDuration: `${particle.duration}s`
+          } as CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
+function createDustParticles(count: number): DustParticle[] {
+  let seed = 108;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+
+  return Array.from({ length: count }, (_, id) => ({
+    id,
+    x: random() * 100,
+    y: random() * 100,
+    size: 1 + random() * 2.4,
+    delay: random() * -28,
+    duration: 20 + random() * 18,
+    tx: (random() - 0.5) * 95,
+    ty: -(50 + random() * 130)
+  }));
+}
+
+function readableSurahName(entry: QuranManifestEntry | null) {
+  const nameArabic = entry?.surah?.nameArabic;
+  if (nameArabic && !looksMojibake(nameArabic)) return nameArabic;
+  return entry?.surah?.nameSimple ?? '-';
+}
+
+function looksMojibake(value: string) {
+  return /[ØÙ�]/.test(value);
 }
 
 function useQuranPageLayout(entry: QuranManifestEntry | null, windowWidth: number, quranZoom: number) {

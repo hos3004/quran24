@@ -20,6 +20,12 @@ export type QuranManifestEntry = {
   audioPath?: string | null;
   audioDuration?: number;
   durationSec?: number;
+  surah?: {
+    id?: number;
+    nameArabic?: string;
+    nameSimple?: string;
+  };
+  juz?: number;
 };
 
 export type QuranPageOffset = {
