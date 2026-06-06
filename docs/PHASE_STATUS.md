@@ -1464,3 +1464,10 @@ Notes:
 
 - Religious insights are readiness diagnostics, not authoritative prayer-time scheduling.
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.
+
+## Phase 17 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 17 commit: `e331eb2`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 17 push without rewriting published history.
