@@ -22,6 +22,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT = resolve(__dirname, '..');
 const CLIENT_DIST = join(ROOT, 'client', 'dist');
+const CLIENT_ASSETS = join(CLIENT_DIST, 'assets');
 const PORT = Number.parseInt(process.env.PORT || '3737', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const startedAtMs = Date.now();
@@ -434,6 +435,13 @@ app.post('/api/media/scan', requireAdminWrite, (_req, res) => {
   }
 });
 
+if (existsSync(CLIENT_ASSETS)) {
+  app.use('/assets', express.static(CLIENT_ASSETS, {
+    fallthrough: true,
+    maxAge: '1m'
+  }));
+}
+
 app.use('/assets/reciters', express.static(join(ROOT, 'data', 'reciters'), {
   fallthrough: true,
   maxAge: '5m'
@@ -445,6 +453,7 @@ app.use('/assets', express.static(join(ROOT, 'data', 'assets'), {
 }));
 
 app.use('/assets', (req, res) => {
+  res.set('Cache-Control', 'no-store');
   res.status(404).json({
     ok: false,
     error: 'Asset not found',

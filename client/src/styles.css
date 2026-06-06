@@ -4,6 +4,7 @@
   background: #0b1117;
   color: #f5f0e6;
   text-rendering: geometricPrecision;
+  --deployment-asset-version: 20260606;
 }
 
 * {
