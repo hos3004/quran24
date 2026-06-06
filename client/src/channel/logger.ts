@@ -1,3 +1,5 @@
+import { sendAndroidBridgeEvent } from './bridge/androidBridge';
+
 export type RuntimeLogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export type AndroidBridgeHeartbeat = {
@@ -24,7 +26,7 @@ export function logRuntime(level: RuntimeLogLevel, event: string, fields: Record
 }
 
 export function emitHeartbeat(heartbeat: AndroidBridgeHeartbeat) {
+  sendAndroidBridgeEvent(heartbeat);
   window.dispatchEvent(new CustomEvent('quran24:heartbeat', { detail: heartbeat }));
   logRuntime('info', 'heartbeat', heartbeat);
 }
-

@@ -177,7 +177,7 @@ function DiagnosticsAdmin({
           </div>
           <div className="metric">
             <span>Phase</span>
-            <strong>{diagnostics.channelStatus?.phase ?? 3}</strong>
+            <strong>{diagnostics.channelStatus?.phase ?? 8}</strong>
           </div>
         </div>
 

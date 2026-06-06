@@ -605,3 +605,69 @@ Notes:
 - Primary Phase 7 commit: `dfa3165`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 7 push without rewriting published history.
+
+## Phase 8 Summary
+
+Status: completed
+
+Goal:
+
+- Add browser-side Android bridge events for video and live stream schedule items.
+- Keep the web runtime as the local renderer and delegate future MP4/HLS playback to Android.
+- Accept basic native-to-web runtime commands.
+- Keep bridge behavior testable before the Android shell exists.
+
+What changed:
+
+- Added `client/src/channel/bridge/androidBridge.ts`.
+- Added bridge event tests in `client/src/channel/bridge/androidBridge.test.ts`.
+- Updated heartbeats to emit through the Android bridge when present.
+- Updated video items to emit `PLAY_VIDEO` bridge events with item id, source, title, and initial offset.
+- Updated live stream items to emit `PLAY_LIVE_STREAM` bridge events with item id, source, and title.
+- Added native command subscription in `ChannelRuntime`.
+- Added `RELOAD_SCHEDULE` command handling.
+- Added last-command diagnostics to `/channel`.
+- Updated `/api/channel/status` to report Phase 8 bridge and heartbeat readiness.
+- Updated README and architecture docs with the bridge contract.
+
+Reference used from `livestreamquran-reference`:
+
+- Preserved the separation between browser visual runtime and external playback/control surfaces.
+- Preserved the route/API compatibility direction while moving video/HLS responsibility toward Android.
+
+What was intentionally not reused:
+
+- Browser-owned MP4/HLS playback as the production Android strategy.
+- Encoded whole-Quran video output.
+- Any Android native code before the Android TV phases.
+
+## Phase 8 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git pull --ff-only`: already up to date before Phase 8 edits continued.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 8 backend Node tests passed and 17 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Server smoke on port 3837:
+  - `GET /api/health` returned `service: quran24-channel`.
+  - `GET /api/channel/status` returned `phase: 8`, `androidBridge: true`, and `heartbeat: every-5-sec`.
+  - `GET /api/channel/schedule` returned schedule version 3.
+  - `GET /channel` returned HTML containing `<title>Quran24</title>`.
+
+Notes:
+
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.
+- The first `/channel` HTML smoke used PowerShell `Invoke-WebRequest`, which hit a local `NullReferenceException`; the final HTML smoke passed with `curl.exe`.

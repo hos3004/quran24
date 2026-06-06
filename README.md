@@ -8,7 +8,7 @@ Quran24 is being built as a channel-first successor to the reference `livestream
 Schedule + local rendering + synchronized clock = TV-like channel
 ```
 
-Phase 1 establishes the runnable web/server foundation only. Channel scheduling, Quran playback, Android TV, Media3, watchdogs, telemetry, and offline cache are added in later phases.
+The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, and browser-to-Android bridge events for future native video/HLS playback. Android TV shell, Media3 playback, watchdogs, telemetry, and offline cache are added in later phases.
 
 ## Local Folders
 
@@ -114,6 +114,24 @@ Phase 7 also seeds two break slides:
 data/assets/slides/dua-1.jpeg
 data/assets/slides/dua-2.jpeg
 ```
+
+## Android Bridge Events
+
+The `/channel` web runtime emits JSON bridge events through `window.Quran24Android.postMessage(...)` or `window.AndroidBridge.postMessage(...)` when either object is present. Without Android, it dispatches browser events for testing:
+
+```text
+quran24:android-bridge-event
+```
+
+Current event types:
+
+- `HEARTBEAT`
+- `PLAY_VIDEO`
+- `PLAY_LIVE_STREAM`
+- `RUNTIME_ERROR`
+- `REQUEST_RELOAD`
+
+Android or tests can send commands back through `window.quran24ReceiveCommand(...)` or the `quran24:web-runtime-command` browser event. Current commands are `VIDEO_FINISHED`, `VIDEO_FAILED`, `RESUME_CHANNEL`, and `RELOAD_SCHEDULE`.
 
 Write APIs require an admin token:
 

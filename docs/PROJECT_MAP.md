@@ -71,7 +71,9 @@ Target repository:
 - Runtime utilities:
   - `client/src/channel/logger.ts`
   - `client/src/channel/runtimeStore.ts`
-- Placeholder renderers:
+- Android/WebView bridge contract:
+  - `client/src/channel/bridge/androidBridge.ts`
+- Runtime renderers:
   - `client/src/channel/renderers/QuranRenderer.tsx`
   - `client/src/channel/renderers/BreakRenderer.tsx`
   - `client/src/channel/renderers/AnnouncementRenderer.tsx`
@@ -177,8 +179,8 @@ Target schedule data:
 - Content item types: `quran`, `break`, `video`, `live_stream`, `announcement`, `image_slideshow`, `audio_message`.
 - Required metadata: `version`, `publishedAt`, optional `publishedBy`, optional `checksum`, `status`.
 - Every publish must create immutable history under `data/channel/schedule-history`.
-- Current seed schedule: `data/channel/schedule.json`, version 2, status `published`.
-- Current history snapshot: `data/channel/schedule-history/schedule-v2-2026-06-06T05-30-00-000Z.json`.
+- Current seed schedule: `data/channel/schedule.json`, version 3, status `published`.
+- Current schedule history snapshots include version 2 and version 3 publishes.
 - Current Quran seed manifest: `data/manifest.json`, pages 1-20.
 - Current Quran seed assets: `data/assets/hafs/001-020.webp` and matching per-page JSON files.
 - Current break slide seed assets: `data/assets/slides/dua-1.jpeg` and `data/assets/slides/dua-2.jpeg`.
@@ -265,7 +267,7 @@ Architecture priorities:
 - Remote `quran24` has no `main` branch yet; Phase 0 starts from an unborn repository.
 - Reference audio assets are gitignored and absent locally; early phases must not assume committed MP3 files.
 - Android dependency versions must be checked against official Android sources before Android phases.
-- WebView audio can be fragile for 24/7 use; bridge/native playback strategy needs deliberate ownership boundaries.
+- WebView audio can be fragile for 24/7 use; the Phase 8 bridge defines ownership boundaries for native video/HLS but Quran audio still needs Android-phase supervision.
 - Schedule validation must block path traversal and unsafe local paths from the first write API phase.
 - Time sync must use `performance.now()` anchoring to avoid drift and wall-clock jumps.
 - The reference app includes useful rendering code but it is not channel-first; direct copy would preserve the wrong product model.

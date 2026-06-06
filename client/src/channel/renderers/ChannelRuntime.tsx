@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { calculateQuranPageFromOffset, getActiveScheduleItem, type QuranManifestEntry } from '../scheduler';
-import { emitHeartbeat } from '../logger';
+import { emitHeartbeat, logRuntime } from '../logger';
 import { setRuntimeSnapshot } from '../runtimeStore';
+import { subscribeWebRuntimeCommands, type WebRuntimeCommand } from '../bridge/androidBridge';
 import { useChannelClock } from '../hooks/useChannelClock';
 import { useChannelSchedule } from '../hooks/useChannelSchedule';
 import type {
@@ -24,6 +24,7 @@ export function ChannelRuntime() {
   const clockState = useChannelClock();
   const [manifest, setManifest] = useState<QuranManifestEntry[]>([]);
   const [manifestError, setManifestError] = useState<string | null>(null);
+  const [lastCommand, setLastCommand] = useState<WebRuntimeCommand | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,6 +47,18 @@ export function ChannelRuntime() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => subscribeWebRuntimeCommands((command) => {
+    setLastCommand(command);
+    logRuntime('info', 'web_runtime_command', {
+      commandType: command.type,
+      itemId: 'itemId' in command ? command.itemId : undefined
+    });
+
+    if (command.type === 'RELOAD_SCHEDULE') {
+      scheduleState.reload();
+    }
+  }), [scheduleState.reload]);
 
   const active = useMemo(() => {
     if (!scheduleState.schedule || !clockState.serverNow) return null;
@@ -127,6 +140,10 @@ export function ChannelRuntime() {
         <div>
           <span>Manifest</span>
           <strong>{manifestError ? 'error' : `${manifest.length} pages`}</strong>
+        </div>
+        <div>
+          <span>Last Command</span>
+          <strong>{lastCommand?.type ?? 'none'}</strong>
         </div>
       </aside>
     </main>

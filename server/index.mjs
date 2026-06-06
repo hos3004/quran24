@@ -96,7 +96,7 @@ app.get('/api/channel/status', (_req, res) => {
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 3,
+    phase: 8,
     schedule: {
       loaded: Boolean(schedule),
       activeVersion: schedule?.version ?? null,
@@ -105,8 +105,8 @@ app.get('/api/channel/status', (_req, res) => {
     },
     runtime: {
       channelRoute: '/channel',
-      androidBridge: false,
-      heartbeat: 'not-implemented-yet'
+      androidBridge: true,
+      heartbeat: 'every-5-sec'
     },
     compatibility: {
       config: true,

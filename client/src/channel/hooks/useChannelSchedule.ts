@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ChannelSchedule, ScheduleValidationResult } from '../types';
 
 export type ChannelScheduleState = {
@@ -52,9 +52,10 @@ export function useChannelSchedule(): ChannelScheduleState {
     };
   }, [reloadToken]);
 
+  const reload = useCallback(() => setReloadToken((value) => value + 1), []);
+
   return {
     ...state,
-    reload: () => setReloadToken((value) => value + 1)
+    reload
   };
 }
-

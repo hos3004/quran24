@@ -173,6 +173,20 @@ Phase 7 now adds scheduled break and announcement behavior:
 
 The schedule still controls item transitions. Renderers do not self-advance; they render the active item and offset provided by the scheduler.
 
+## Phase 8 Guidance
+
+Phase 8 now adds the browser-side Android bridge contract for video and live stream items:
+
+- `client/src/channel/bridge/androidBridge.ts` owns serialized JSON messaging.
+- Heartbeats are sent through the bridge when an Android object is present.
+- Video schedule items emit `PLAY_VIDEO` once when the item/source becomes active.
+- Live stream schedule items emit `PLAY_LIVE_STREAM` once when the item/source becomes active.
+- The web runtime accepts `VIDEO_FINISHED`, `VIDEO_FAILED`, `RESUME_CHANNEL`, and `RELOAD_SCHEDULE` commands.
+- Malformed native commands are reported as `RUNTIME_ERROR` bridge events instead of crashing the renderer.
+- The browser fallback dispatches custom events so the contract can be tested before the Android shell exists.
+
+The web runtime still does not own actual MP4/HLS playback. Android Phase 13 should consume these bridge events with Media3/ExoPlayer and then send lifecycle commands back to the web runtime.
+
 ## Android TV Guidance
 
 Android phases should use:
