@@ -240,3 +240,72 @@ Observed results:
 - Primary Phase 2 commit: `ae51e2e`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 2 push without rewriting published history.
+
+## Phase 3 Summary
+
+Status: completed
+
+Goal:
+
+- Make schedule the core platform model.
+- Add shared TypeScript schedule types.
+- Add backend schedule store and validation.
+- Add schedule files and history folder.
+- Add protected schedule read/write APIs.
+
+What changed:
+
+- Added `client/src/channel/types.ts`.
+- Added `server/channel/scheduleValidator.mjs`.
+- Added `server/channel/scheduleStore.mjs`.
+- Added `data/channel/schedule.json`.
+- Added `data/channel/schedule-history/`.
+- Added `GET /api/channel/schedule`.
+- Added token-protected `PATCH /api/channel/schedule`.
+- Updated `GET /api/channel/status` to report schedule version/status and Phase 3.
+- Added schedule validator tests.
+
+Reference used from `livestreamquran-reference`:
+
+- Preserved page number bounds from the 604-page Hafs model.
+- Preserved `/assets/...` path convention.
+- Preserved future compatibility with reciter IDs from `reciters.json`.
+
+What was intentionally not reused:
+
+- Reference config write behavior.
+- Arbitrary path editing.
+- Legacy player state machine.
+- Any media files from the reference repository.
+
+## Phase 3 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; $env:ADMIN_TOKEN = "phase3-token"; node server/index.mjs
+```
+
+Observed results:
+
+- `git pull --ff-only`: already up to date.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 8 tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Valid PATCH with `x-admin-token: phase3-token` saved schedule version 2.
+- Valid PATCH created history file `data/channel/schedule-history/schedule-v2-2026-06-06T05-30-00-000Z.json`.
+- Invalid PATCH with `fromPage: 900` returned 400.
+- Non-mutating smoke after final code tweak:
+  - `GET /api/channel/status` returned 200 with `phase: 3`.
+  - `GET /api/channel/schedule` returned 200 with `version: 2`.
+  - schedule validation returned `ok: true`.
+
+## Phase 3 Git Update
+
+Pending commit and push.

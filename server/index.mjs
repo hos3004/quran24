@@ -6,6 +6,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
+import { createScheduleStore } from './channel/scheduleStore.mjs';
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ function log(level, event, fields = {}) {
 }
 
 const packageJson = readJsonIfExists(join(ROOT, 'package.json'), { version: '0.0.0' });
+const scheduleStore = createScheduleStore({ rootDir: ROOT, logger: log });
 
 const defaultConfig = {
   service: 'quran24-channel',
@@ -81,17 +83,25 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.get('/api/channel/status', (_req, res) => {
+  let schedule = null;
+  try {
+    schedule = scheduleStore.loadSchedule();
+  } catch (error) {
+    log('error', 'schedule_status_load_failed', { message: error.message });
+  }
+
   res.json({
     ok: true,
     service: 'quran24-channel',
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 2,
+    phase: 3,
     schedule: {
-      loaded: false,
-      activeVersion: null,
-      source: 'not-implemented-yet'
+      loaded: Boolean(schedule),
+      activeVersion: schedule?.version ?? null,
+      status: schedule?.status ?? null,
+      source: schedule ? 'data/channel/schedule.json' : 'unavailable'
     },
     runtime: {
       channelRoute: '/channel',
@@ -104,6 +114,40 @@ app.get('/api/channel/status', (_req, res) => {
       slides: true
     }
   });
+});
+
+app.get('/api/channel/schedule', (_req, res) => {
+  try {
+    const schedule = scheduleStore.loadSchedule();
+    const validation = scheduleStore.validateSchedule(schedule);
+    res.json({ ok: true, schedule, validation });
+  } catch (error) {
+    log('error', 'schedule_get_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to load schedule' });
+  }
+});
+
+app.patch('/api/channel/schedule', requireAdminWrite, (req, res) => {
+  try {
+    const result = scheduleStore.publishSchedule(req.body || {}, {
+      publishedBy: req.get('x-admin-user') || undefined
+    });
+
+    if (!result.ok) {
+      res.status(400).json(result);
+      return;
+    }
+
+    res.json({
+      ok: true,
+      schedule: result.schedule,
+      validation: result.validation,
+      historyFile: result.historyPath ? result.historyPath.replace(ROOT, '').replace(/\\/g, '/') : null
+    });
+  } catch (error) {
+    log('error', 'schedule_patch_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to save schedule' });
+  }
 });
 
 app.use('/assets', express.static(join(ROOT, 'data', 'assets'), {
@@ -156,6 +200,26 @@ app.get(/.*/, (_req, res) => {
   </body>
 </html>`);
 });
+
+function requireAdminWrite(req, res, next) {
+  const expected = process.env.ADMIN_TOKEN;
+  if (!expected) {
+    res.status(403).json({
+      ok: false,
+      error: 'Write APIs are disabled until ADMIN_TOKEN is set'
+    });
+    return;
+  }
+
+  const bearer = req.get('authorization')?.replace(/^Bearer\s+/i, '');
+  const provided = req.get('x-admin-token') || bearer;
+  if (provided !== expected) {
+    res.status(401).json({ ok: false, error: 'Invalid admin token' });
+    return;
+  }
+
+  next();
+}
 
 const server = app.listen(PORT, HOST, () => {
   log('info', 'server_started', {

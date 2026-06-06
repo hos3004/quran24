@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "timezone": "Europe/Istanbul",
+  "publishedAt": "2026-06-06T08:30:00+03:00",
+  "publishedBy": "phase3-smoke",
+  "status": "published",
+  "defaultFallbackItemId": "fallback-quran",
+  "days": {
+    "daily": [
+      {
+        "id": "fallback-quran",
+        "type": "quran",
+        "title": "Quran recitation - Ahmad Al Ajmy",
+        "start": "00:00:00",
+        "reciterId": "ajmy",
+        "fromPage": 1,
+        "toPage": 20,
+        "layoutPresetId": 2,
+        "allowAutoContinue": true
+      },
+      {
+        "id": "break-dua-001",
+        "type": "break",
+        "title": "Dua break",
+        "start": "00:45:00",
+        "durationSec": 120,
+        "slides": [
+          "/assets/slides/dua-1.webp",
+          "/assets/slides/dua-2.webp"
+        ],
+        "audio": "/assets/audio/dua.mp3"
+      },
+      {
+        "id": "announcement-001",
+        "type": "announcement",
+        "title": "Channel announcement",
+        "start": "00:50:00",
+        "durationSec": 60,
+        "message": "Quran24"
+      },
+      {
+        "id": "video-dua-001",
+        "type": "video",
+        "title": "Short dua video",
+        "start": "01:00:00",
+        "durationSec": 300,
+        "source": "https://example.com/videos/dua.mp4",
+        "startMode": "timeline_offset"
+      },
+      {
+        "id": "live-taraweeh-placeholder",
+        "type": "live_stream",
+        "title": "Taraweeh live stream placeholder",
+        "start": "02:00:00",
+        "durationSec": 900,
+        "source": "https://example.com/live/taraweeh.m3u8",
+        "startMode": "live_edge"
+      }
+    ],
+    "friday": []
+  },
+  "checksum": "56df7d7a626d04a8f4ef5c170b5671c492eee980d8149844522502a22f35aa58"
+}

@@ -80,12 +80,23 @@ http://localhost:3737
 
 - `GET /api/health`
 - `GET /api/channel/status`
+- `GET /api/channel/schedule`
+- `PATCH /api/channel/schedule`
 - `GET /api/config`
 - `GET /api/slides`
 - `GET /api/manifest`
 - `GET /manifest.json`
 
 These endpoints are minimal early-phase implementations. They preserve useful paths from the reference app while the channel-first API is built in later phases.
+
+Write APIs require an admin token:
+
+```powershell
+$env:ADMIN_TOKEN = "change-me"
+npm run server
+```
+
+Send the token as `x-admin-token` or `Authorization: Bearer <token>`.
 
 ## Documentation
 

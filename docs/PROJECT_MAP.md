@@ -67,6 +67,8 @@ Target repository:
 - Current compatibility API placeholders:
   - `GET /api/health`
   - `GET /api/channel/status`
+  - `GET /api/channel/schedule`
+  - `PATCH /api/channel/schedule`
   - `GET /api/config`
   - `GET /api/slides`
   - `GET /api/manifest`
@@ -160,6 +162,8 @@ Target schedule data:
 - Content item types: `quran`, `break`, `video`, `live_stream`, `announcement`, `image_slideshow`, `audio_message`.
 - Required metadata: `version`, `publishedAt`, optional `publishedBy`, optional `checksum`, `status`.
 - Every publish must create immutable history under `data/channel/schedule-history`.
+- Current seed schedule: `data/channel/schedule.json`, version 2, status `published`.
+- Current history snapshot: `data/channel/schedule-history/schedule-v2-2026-06-06T05-30-00-000Z.json`.
 
 ## REUSABLE_COMPONENTS_FROM_REFERENCE
 

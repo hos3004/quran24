@@ -70,6 +70,37 @@ Phase 2 now adds:
 
 The environment already has another server responding on port 3737, so smoke verification used `PORT=3837` for Quran24. Do not stop unrelated local processes without approval.
 
+## Phase 3 Guidance
+
+Phase 3 now adds:
+
+- Shared TypeScript channel schedule types in `client/src/channel/types.ts`.
+- Seed schedule in `data/channel/schedule.json`.
+- Schedule history folder under `data/channel/schedule-history`.
+- Backend schedule validator in `server/channel/scheduleValidator.mjs`.
+- Backend schedule store in `server/channel/scheduleStore.mjs`.
+- `GET /api/channel/schedule`.
+- Token-protected `PATCH /api/channel/schedule`.
+
+Write APIs refuse requests unless `ADMIN_TOKEN` is set and the request supplies the matching `x-admin-token` or bearer token. This keeps the safe default closed while still allowing local verification with a temporary token.
+
+The validator currently checks:
+
+- schedule object shape
+- timezone
+- published date
+- status
+- known item types
+- required ids and unique ids
+- valid `HH:MM:SS` starts
+- duplicate starts
+- page range 1-604
+- `fromPage <= toPage`
+- positive durations
+- safe URL or `/assets/` media references
+- explicit duration overlaps
+- fallback item id existence
+
 ## Android TV Guidance
 
 Android phases should use:
