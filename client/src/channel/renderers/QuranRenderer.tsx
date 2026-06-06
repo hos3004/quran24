@@ -1,7 +1,19 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { ChannelTheme, QuranScheduleItem } from '../types';
 import type { QuranManifestEntry } from '../scheduler';
 import { useQuranSchedulePlayback } from '../hooks/useQuranSchedulePlayback';
+import { detectQuranContentBounds } from '../quranContentBounds';
+
+type PageLayout = {
+  imagePath: string;
+  renderedW: number;
+  renderedH: number;
+  contentY: number;
+  contentH: number;
+  leftOffset: number;
+};
+
+const PAGE_CONTENT_GAP = 30;
 
 const DEFAULT_THEME: ChannelTheme = {
   id: 'classic-gold',
@@ -26,19 +38,76 @@ export function QuranRenderer({
 }) {
   const playback = useQuranSchedulePlayback(item, manifest, offsetSec);
   const page = playback.pageOffset?.page ?? item.fromPage;
+  const windowRef = useRef<HTMLDivElement | null>(null);
+  const lastTranslateYRef = useRef<number | null>(null);
+  const initializedPageRef = useRef<string | null>(null);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [entryInitialY, setEntryInitialY] = useState<number | null>(null);
   const theme = themes.find((candidate) => candidate.id === item.themeId)
     ?? themes.find((candidate) => candidate.id === `preset-${item.layoutPresetId}`)
     ?? themes[0]
     ?? DEFAULT_THEME;
-  const quranScrollY = -(playback.audioProgress * 22);
+  const prevEntry = useMemo(() => {
+    if (!playback.pageOffset) return null;
+    const previousPage = playback.pageOffset.page - 1;
+    return manifest.find((entry) => entry.page === previousPage && entry.page >= item.fromPage) ?? null;
+  }, [item.fromPage, manifest, playback.pageOffset]);
+
+  const quranZoom = theme.quranZoom || DEFAULT_THEME.quranZoom;
+  const prevLayout = useQuranPageLayout(prevEntry, windowSize.width, quranZoom);
+  const currLayout = useQuranPageLayout(playback.currentEntry, windowSize.width, quranZoom);
+  const nextLayout = useQuranPageLayout(playback.nextEntry, windowSize.width, quranZoom);
+
+  const offsetPrevToCurr = prevLayout && currLayout ? getPageAdvanceOffset(prevLayout, currLayout) : 0;
+  const offsetCurrToNext = currLayout && nextLayout ? getPageAdvanceOffset(currLayout, nextLayout) : 0;
+  const currKey = playback.currentEntry?.imagePath ?? null;
+
+  useEffect(() => {
+    const element = windowRef.current;
+    if (!element) return;
+
+    const updateSize = () => {
+      setWindowSize({
+        width: element.clientWidth,
+        height: element.clientHeight
+      });
+    };
+
+    updateSize();
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(element);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!currLayout || !currKey || !windowSize.height) return;
+    if (initializedPageRef.current === currKey) return;
+
+    const initialY = lastTranslateYRef.current !== null && prevLayout
+      ? lastTranslateYRef.current + offsetPrevToCurr
+      : windowSize.height - currLayout.contentY;
+
+    initializedPageRef.current = currKey;
+    setEntryInitialY(initialY);
+    lastTranslateYRef.current = initialY;
+  }, [currKey, currLayout, offsetPrevToCurr, prevLayout, windowSize.height]);
+
+  const translateY = useMemo(() => {
+    if (!currLayout || !windowSize.height) return 0;
+    const initialY = entryInitialY ?? windowSize.height - currLayout.contentY;
+    const endY = windowSize.height * 0.6 - (currLayout.contentY + currLayout.contentH);
+    const nextTranslateY = initialY + (endY - initialY) * playback.audioProgress;
+    lastTranslateYRef.current = nextTranslateY;
+    return nextTranslateY;
+  }, [currLayout, entryInitialY, playback.audioProgress, windowSize.height]);
+
   const pageStyle = {
     '--theme-bg': theme.background,
     '--page-left': `${(theme.page.x / 1920) * 100}%`,
     '--page-top': `${(theme.page.y / 1080) * 100}%`,
     '--page-width': `${(theme.page.w / 1920) * 100}%`,
     '--page-height': `${(theme.page.h / 1080) * 100}%`,
-    '--quran-zoom': `${theme.quranZoom * 100}%`,
-    '--quran-scroll-y': `${quranScrollY}%`
+    '--quran-flow-y': `${translateY}px`
   } as CSSProperties;
 
   return (
@@ -49,14 +118,13 @@ export function QuranRenderer({
       style={pageStyle}
     >
       <div className="quran-reference-stage">
-        <div className="quran-page-window">
-          <div className="quran-page-mount">
-            {playback.currentEntry?.imagePath ? (
-              <img src={playback.currentEntry.imagePath} alt={`Quran page ${page}`} draggable={false} />
-            ) : (
-              <div className="quran-page-missing">Page {page}</div>
-            )}
+        <div className="quran-page-window" ref={windowRef}>
+          <div className="quran-page-flow">
+            <QuranFlowPage entry={prevEntry} layout={prevLayout} top={-offsetPrevToCurr} hidden={!prevEntry} />
+            <QuranFlowPage entry={playback.currentEntry} layout={currLayout} top={0} />
+            <QuranFlowPage entry={playback.nextEntry} layout={nextLayout} top={offsetCurrToNext} />
           </div>
+          {!playback.currentEntry?.imagePath && <div className="quran-page-missing">Page {page}</div>}
         </div>
         <img
           className="quran-frame-overlay"
@@ -84,5 +152,74 @@ export function QuranRenderer({
       </span>
       {playback.audioError && <span className="sr-only">{playback.audioError}</span>}
     </section>
+  );
+}
+
+function useQuranPageLayout(entry: QuranManifestEntry | null, windowWidth: number, quranZoom: number) {
+  const [layout, setLayout] = useState<PageLayout | null>(null);
+
+  useEffect(() => {
+    const imagePath = entry?.imagePath;
+    if (!imagePath || windowWidth <= 0) {
+      setLayout(null);
+      return;
+    }
+
+    let cancelled = false;
+    detectQuranContentBounds(imagePath)
+      .then((bounds) => {
+        if (cancelled) return;
+        const scale = (windowWidth / Math.max(1, bounds.width)) * quranZoom;
+        setLayout({
+          imagePath,
+          renderedW: bounds.imageWidth * scale,
+          renderedH: bounds.imageHeight * scale,
+          contentY: bounds.y * scale,
+          contentH: bounds.height * scale,
+          leftOffset: (windowWidth - bounds.imageWidth * scale) / 2
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setLayout(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [entry?.imagePath, quranZoom, windowWidth]);
+
+  return layout;
+}
+
+function getPageAdvanceOffset(current: PageLayout, next: PageLayout) {
+  return Math.max(0, current.contentY + current.contentH + PAGE_CONTENT_GAP - next.contentY);
+}
+
+function QuranFlowPage({
+  entry,
+  layout,
+  top,
+  hidden = false
+}: {
+  entry: QuranManifestEntry | null;
+  layout: PageLayout | null;
+  top: number;
+  hidden?: boolean;
+}) {
+  if (!entry?.imagePath || !layout || hidden) return null;
+
+  return (
+    <img
+      className="quran-flow-page"
+      src={entry.imagePath}
+      alt={`Quran page ${entry.page}`}
+      draggable={false}
+      style={{
+        top,
+        left: layout.leftOffset,
+        width: layout.renderedW,
+        height: layout.renderedH
+      }}
+    />
   );
 }
