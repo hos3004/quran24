@@ -490,6 +490,156 @@ button:focus-visible,
   padding: 0;
 }
 
+.channel-overlay-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.channel-logo-bug {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 168px;
+  padding: 10px 14px;
+  border: 1px solid rgba(228, 188, 104, 0.34);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(6, 7, 9, 0.74), rgba(54, 35, 16, 0.5));
+  color: #fff4cf;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+}
+
+.channel-logo-bug img {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+
+.channel-logo-mark {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 225, 159, 0.5);
+  border-radius: 999px;
+  background: radial-gradient(circle, #f3d58b, #8e5c1f 72%);
+  color: #1f1205;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.channel-logo-bug strong,
+.channel-logo-bug span {
+  display: block;
+  line-height: 1.08;
+  white-space: nowrap;
+}
+
+.channel-logo-bug strong {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.channel-logo-bug span {
+  margin-top: 3px;
+  color: #e7c875;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.overlay-top-right {
+  top: max(24px, env(safe-area-inset-top));
+  right: max(32px, env(safe-area-inset-right));
+}
+
+.overlay-top-left {
+  top: max(24px, env(safe-area-inset-top));
+  left: max(32px, env(safe-area-inset-left));
+}
+
+.overlay-bottom-right {
+  right: max(32px, env(safe-area-inset-right));
+  bottom: max(104px, calc(env(safe-area-inset-bottom) + 104px));
+}
+
+.overlay-bottom-left {
+  left: max(32px, env(safe-area-inset-left));
+  bottom: max(104px, calc(env(safe-area-inset-bottom) + 104px));
+}
+
+.channel-extra-overlay {
+  position: absolute;
+  max-width: min(28vw, 520px);
+  max-height: 38vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+}
+
+.channel-ticker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: minmax(150px, 12vw) 1fr;
+  height: 64px;
+  border-top: 1px solid rgba(231, 200, 117, 0.3);
+  background: rgba(4, 5, 7, 0.86);
+  color: #fff7df;
+  direction: rtl;
+  overflow: hidden;
+}
+
+.channel-ticker-label {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #b8872f, #5d3912);
+  color: #1a0e03;
+  font-size: clamp(18px, 1.6vw, 28px);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.channel-ticker-track {
+  position: relative;
+  overflow: hidden;
+}
+
+.channel-ticker-content {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 72px;
+  min-width: 200%;
+  white-space: nowrap;
+  animation: channel-ticker-scroll var(--ticker-speed, 58s) linear infinite;
+}
+
+.channel-ticker-content span {
+  padding-inline: 36px;
+  color: #fff0c7;
+  font-size: clamp(21px, 1.8vw, 34px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+@keyframes channel-ticker-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(50%, 0, 0);
+  }
+}
+
 .channel-program {
   width: min(1120px, calc(100% - clamp(48px, 10vw, 184px)));
   min-height: min(58vh, 620px);

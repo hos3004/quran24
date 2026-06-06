@@ -125,6 +125,33 @@ export type ChannelSchedule = ScheduleMetadata & {
   religious?: ReligiousScheduleMetadata;
 };
 
+export type OverlayPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+export type ChannelOverlaySettings = {
+  version: number;
+  logo: {
+    enabled: boolean;
+    text: string;
+    subtext: string;
+    imagePath?: string;
+    position: OverlayPosition;
+  };
+  ticker: {
+    enabled: boolean;
+    welcomeText: string;
+    todayPrefix: string;
+    includeTodaySchedule: boolean;
+    speedSec: number;
+  };
+  extraImage: {
+    enabled: boolean;
+    imagePath?: string;
+    alt: string;
+    position: OverlayPosition;
+    widthPx: number;
+  };
+};
+
 export type ScheduleValidationResult = {
   ok: boolean;
   errors: string[];

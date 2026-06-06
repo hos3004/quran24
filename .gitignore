@@ -54,6 +54,8 @@ data/assets/*
 !data/assets/hafs/**
 !data/assets/slides/
 !data/assets/slides/**
+!data/assets/overlays/
+!data/assets/overlays/**
 !data/assets/themes/
 !data/assets/themes/**
 

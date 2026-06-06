@@ -7,6 +7,7 @@ import { dirname, extname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { createMediaScanner } from './channel/mediaScanner.mjs';
+import { createOverlayStore } from './channel/overlayStore.mjs';
 import { createProgrammingStore } from './channel/programmingStore.mjs';
 import { createReciterStore } from './channel/reciterStore.mjs';
 import { summarizeReligiousSchedule } from './channel/religiousSchedule.mjs';
@@ -55,6 +56,7 @@ const packageJson = readJsonIfExists(join(ROOT, 'package.json'), { version: '0.0
 const scheduleStore = createScheduleStore({ rootDir: ROOT, logger: log });
 const reciterStore = createReciterStore({ rootDir: ROOT, logger: log });
 const themeStore = createThemeStore({ rootDir: ROOT, logger: log });
+const overlayStore = createOverlayStore({ rootDir: ROOT, logger: log });
 const programmingStore = createProgrammingStore({ rootDir: ROOT, logger: log });
 const mediaScanner = createMediaScanner({ rootDir: ROOT, logger: log });
 const telemetryStore = createTelemetryStore({ rootDir: ROOT, logger: log });
@@ -388,6 +390,29 @@ app.post('/api/themes/scan', requireAdminWrite, (_req, res) => {
   } catch (error) {
     log('error', 'themes_scan_failed', { message: error.message });
     res.status(500).json({ ok: false, error: 'Failed to scan themes' });
+  }
+});
+
+app.get('/api/channel/overlays', (_req, res) => {
+  try {
+    res.json(overlayStore.loadOverlays());
+  } catch (error) {
+    log('error', 'overlays_get_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to load overlays' });
+  }
+});
+
+app.patch('/api/channel/overlays', requireAdminWrite, (req, res) => {
+  try {
+    const result = overlayStore.saveOverlays(req.body || {});
+    if (!result.ok) {
+      res.status(400).json(result);
+      return;
+    }
+    res.json(result);
+  } catch (error) {
+    log('error', 'overlays_patch_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to save overlays' });
   }
 });
 

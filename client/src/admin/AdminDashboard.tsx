@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getActiveScheduleItem } from '../channel/scheduler';
 import type {
   BreakScheduleItem,
+  ChannelOverlaySettings,
   ChannelSchedule,
   ChannelScheduleItem,
   LiveStreamScheduleItem,
@@ -195,6 +196,12 @@ type ThemesResponse = {
   validation?: ScheduleValidationResult;
 };
 
+type OverlaysResponse = {
+  ok: boolean;
+  overlays: ChannelOverlaySettings;
+  validation?: ScheduleValidationResult;
+};
+
 type ProgrammingTemplate = {
   version: number;
   timezone: string;
@@ -268,7 +275,7 @@ type MediaIndex = {
   missingFiles: { source: string; ownerId: string; path: string; reason: string }[];
 };
 
-const adminSections = ['programming', 'readers', 'themes', 'fillers', 'schedule', 'diagnostics'] as const;
+const adminSections = ['programming', 'readers', 'themes', 'overlays', 'fillers', 'schedule', 'diagnostics'] as const;
 type AdminSection = typeof adminSections[number];
 
 const dayOptions: WeekdayKey[] = [
@@ -320,6 +327,8 @@ export function AdminDashboard({
           <ReadersPanel />
         ) : section === 'themes' ? (
           <ThemesPanel />
+        ) : section === 'overlays' ? (
+          <OverlaysPanel />
         ) : section === 'fillers' ? (
           <FillersPanel />
         ) : (
@@ -1236,6 +1245,160 @@ function LiveStreamFields({ item, onChange }: { item: LiveStreamScheduleItem; on
   );
 }
 
+function OverlaysPanel() {
+  const [overlays, setOverlays] = useState<ChannelOverlaySettings | null>(null);
+  const [validation, setValidation] = useState<ScheduleValidationResult | null>(null);
+  const [adminToken, setAdminToken] = useState('');
+  const [message, setMessage] = useState('Loading overlays');
+  const [busy, setBusy] = useState(false);
+
+  const loadOverlays = useCallback(() => {
+    setBusy(true);
+    fetch('/api/channel/overlays', { cache: 'no-store' })
+      .then((response) => response.json() as Promise<OverlaysResponse>)
+      .then((payload) => {
+        setOverlays(payload.overlays);
+        setValidation(payload.validation ?? null);
+        setMessage('Overlays loaded');
+      })
+      .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
+      .finally(() => setBusy(false));
+  }, []);
+
+  useEffect(() => {
+    loadOverlays();
+  }, [loadOverlays]);
+
+  function updateLogo(patch: Partial<ChannelOverlaySettings['logo']>) {
+    setOverlays((current) => current ? { ...current, logo: { ...current.logo, ...patch } } : current);
+  }
+
+  function updateTicker(patch: Partial<ChannelOverlaySettings['ticker']>) {
+    setOverlays((current) => current ? { ...current, ticker: { ...current.ticker, ...patch } } : current);
+  }
+
+  function updateExtraImage(patch: Partial<ChannelOverlaySettings['extraImage']>) {
+    setOverlays((current) => current ? { ...current, extraImage: { ...current.extraImage, ...patch } } : current);
+  }
+
+  async function saveOverlays() {
+    if (!overlays) return;
+    setBusy(true);
+    setMessage('Saving overlays');
+    try {
+      const response = await fetch('/api/channel/overlays', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken.trim() },
+        body: JSON.stringify(overlays)
+      });
+      const payload = await response.json() as OverlaysResponse & { error?: string };
+      if (!response.ok || !payload.ok) throw new Error(payload.error || payload.validation?.errors?.join(', ') || 'Failed to save overlays');
+      setOverlays(payload.overlays);
+      setValidation(payload.validation ?? null);
+      setMessage('Overlays saved');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!overlays) {
+    return (
+      <section className="admin-panel">
+        <h2>Overlays</h2>
+        <p>{message}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="admin-panel">
+      <div className="admin-panel-title">
+        <h2>Overlays</h2>
+        <strong>Logo, ticker, extra image</strong>
+      </div>
+
+      <div className="form-grid">
+        <label className="checkbox-row">
+          <input type="checkbox" checked={overlays.logo.enabled} onChange={(event) => updateLogo({ enabled: event.target.checked })} />
+          Show channel logo
+        </label>
+        <label>
+          Logo Text
+          <input value={overlays.logo.text} onChange={(event) => updateLogo({ text: event.target.value })} />
+        </label>
+        <label>
+          Logo Subtext
+          <input value={overlays.logo.subtext} onChange={(event) => updateLogo({ subtext: event.target.value })} />
+        </label>
+        <label>
+          Logo Image Path
+          <input placeholder="/assets/overlays/logo.png" value={overlays.logo.imagePath ?? ''} onChange={(event) => updateLogo({ imagePath: event.target.value })} />
+        </label>
+      </div>
+
+      <div className="form-grid">
+        <label className="checkbox-row">
+          <input type="checkbox" checked={overlays.ticker.enabled} onChange={(event) => updateTicker({ enabled: event.target.checked })} />
+          Show ticker
+        </label>
+        <label className="checkbox-row">
+          <input type="checkbox" checked={overlays.ticker.includeTodaySchedule} onChange={(event) => updateTicker({ includeTodaySchedule: event.target.checked })} />
+          Include today schedule
+        </label>
+        <label>
+          Welcome Text
+          <input value={overlays.ticker.welcomeText} onChange={(event) => updateTicker({ welcomeText: event.target.value })} />
+        </label>
+        <label>
+          Today Prefix
+          <input value={overlays.ticker.todayPrefix} onChange={(event) => updateTicker({ todayPrefix: event.target.value })} />
+        </label>
+        <label>
+          Ticker Speed Seconds
+          <input type="number" min="20" max="180" value={overlays.ticker.speedSec} onChange={(event) => updateTicker({ speedSec: Number(event.target.value) })} />
+        </label>
+      </div>
+
+      <div className="form-grid">
+        <label className="checkbox-row">
+          <input type="checkbox" checked={overlays.extraImage.enabled} onChange={(event) => updateExtraImage({ enabled: event.target.checked })} />
+          Show extra image
+        </label>
+        <label>
+          Extra Image Path
+          <input placeholder="/assets/overlays/qr.png" value={overlays.extraImage.imagePath ?? ''} onChange={(event) => updateExtraImage({ imagePath: event.target.value })} />
+        </label>
+        <label>
+          Position
+          <select value={overlays.extraImage.position} onChange={(event) => updateExtraImage({ position: event.target.value as ChannelOverlaySettings['extraImage']['position'] })}>
+            <option value="bottom-right">Bottom right</option>
+            <option value="bottom-left">Bottom left</option>
+            <option value="top-right">Top right</option>
+            <option value="top-left">Top left</option>
+          </select>
+        </label>
+        <label>
+          Width px
+          <input type="number" min="96" max="520" value={overlays.extraImage.widthPx} onChange={(event) => updateExtraImage({ widthPx: Number(event.target.value) })} />
+        </label>
+        <label>
+          Admin Token
+          <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
+        </label>
+      </div>
+
+      <div className="admin-actions">
+        <button type="button" onClick={saveOverlays} disabled={busy}>Save Overlays</button>
+        <button type="button" onClick={loadOverlays} disabled={busy}>Reload</button>
+      </div>
+      <ValidationPanel validation={validation} />
+      <p className="admin-message">{message}</p>
+    </section>
+  );
+}
+
 function ValidationPanel({ validation }: { validation: ScheduleValidationResult | null }) {
   return (
     <div className="admin-panel validation-panel">
@@ -1735,6 +1898,7 @@ function sectionLabel(section: AdminSection) {
     programming: 'Daily Programming',
     readers: 'Readers',
     themes: 'Themes',
+    overlays: 'Overlays',
     fillers: 'Fillers',
     schedule: 'Schedule and Publish',
     diagnostics: 'Diagnostics'

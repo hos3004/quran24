@@ -12,6 +12,7 @@ import type {
   AnnouncementScheduleItem,
   BreakScheduleItem,
   ChannelTheme,
+  ChannelOverlaySettings,
   ChannelScheduleItem,
   LiveStreamScheduleItem,
   QuranScheduleItem,
@@ -19,6 +20,7 @@ import type {
 } from '../types';
 import { AnnouncementRenderer } from './AnnouncementRenderer';
 import { BreakRenderer } from './BreakRenderer';
+import { ChannelOverlay } from './ChannelOverlay';
 import { LiveStreamBridgeRenderer } from './LiveStreamBridgeRenderer';
 import { QuranRenderer } from './QuranRenderer';
 import { VideoBridgeRenderer } from './VideoBridgeRenderer';
@@ -26,6 +28,7 @@ import { VideoBridgeRenderer } from './VideoBridgeRenderer';
 const MANIFEST_CACHE_KEY = 'quran24:quran-manifest:v1';
 const THEMES_CACHE_KEY = 'quran24:themes:v1';
 const SLIDES_CACHE_KEY = 'quran24:slides:v1';
+const OVERLAYS_CACHE_KEY = 'quran24:overlays:v1';
 
 export function ChannelRuntime() {
   const scheduleState = useChannelSchedule();
@@ -33,10 +36,12 @@ export function ChannelRuntime() {
   const [manifest, setManifest] = useState<QuranManifestEntry[]>([]);
   const [themes, setThemes] = useState<ChannelTheme[]>([]);
   const [slides, setSlides] = useState<string[]>([]);
+  const [overlays, setOverlays] = useState<ChannelOverlaySettings | null>(null);
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [manifestSource, setManifestSource] = useState<'network' | 'cache' | null>(null);
   const [themeSource, setThemeSource] = useState<'network' | 'cache' | null>(null);
   const [slidesSource, setSlidesSource] = useState<'network' | 'cache' | null>(null);
+  const [overlaySource, setOverlaySource] = useState<'network' | 'cache' | null>(null);
   const [lastCommand, setLastCommand] = useState<WebRuntimeCommand | null>(null);
   const telemetryRef = useRef<RuntimeTelemetryHeartbeat>({
     playState: 'loading'
@@ -146,6 +151,35 @@ export function ChannelRuntime() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/channel/overlays', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Overlays request failed: ${response.status}`);
+        return response.json() as Promise<{ overlays: ChannelOverlaySettings }>;
+      })
+      .then((data) => {
+        saveCachedPayload(OVERLAYS_CACHE_KEY, data.overlays);
+        if (!cancelled) {
+          setOverlays(data.overlays);
+          setOverlaySource('network');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          const cached = loadCachedPayload<ChannelOverlaySettings>(OVERLAYS_CACHE_KEY);
+          if (cached) {
+            setOverlays(cached.value);
+            setOverlaySource('cache');
+          }
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => subscribeWebRuntimeCommands((command) => {
     setLastCommand(command);
     logRuntime('info', 'web_runtime_command', {
@@ -240,7 +274,10 @@ export function ChannelRuntime() {
     <main className="channel-runtime-shell">
       <section className="channel-stage">
         {active ? (
-          <RuntimeRenderer item={active.item} manifest={manifest} themes={themes} slides={slides} offsetSec={active.offsetSec} />
+          <>
+            <RuntimeRenderer item={active.item} manifest={manifest} themes={themes} slides={slides} offsetSec={active.offsetSec} />
+            <ChannelOverlay overlays={overlays} schedule={scheduleState.schedule} serverNow={clockState.serverNow} />
+          </>
         ) : (
           <section className="channel-program channel-empty">
             <span className="program-kicker">Channel</span>
@@ -281,7 +318,7 @@ export function ChannelRuntime() {
         </div>
         <div>
           <span>Manifest</span>
-          <strong>{manifestError ? `${manifestSource ?? 'error'} / ${manifest.length} pages` : `${manifest.length} pages / themes ${themeSource ?? 'pending'}:${themes.length} / slides ${slidesSource ?? 'pending'}:${slides.length}`}</strong>
+          <strong>{manifestError ? `${manifestSource ?? 'error'} / ${manifest.length} pages` : `${manifest.length} pages / themes ${themeSource ?? 'pending'}:${themes.length} / slides ${slidesSource ?? 'pending'}:${slides.length} / overlays ${overlaySource ?? 'pending'}`}</strong>
         </div>
         <div>
           <span>Schedule Source</span>
