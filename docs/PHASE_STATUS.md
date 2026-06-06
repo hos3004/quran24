@@ -758,3 +758,10 @@ Notes:
 
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.
 - In-app Browser visual verification was not available after tool discovery; server-level smoke was used.
+
+## Phase 9 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 9 commit: `add4469`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 9 push without rewriting published history.
