@@ -28,7 +28,7 @@ app.use(express.json({ limit: '1mb' }));
 function readJsonIfExists(filePath, fallback) {
   if (!existsSync(filePath)) return fallback;
   try {
-    return JSON.parse(readFileSync(filePath, 'utf8'));
+    return JSON.parse(readFileSync(filePath, 'utf8').replace(/^\uFEFF/, ''));
   } catch (error) {
     log('warn', 'json_read_failed', { filePath, message: error.message });
     return fallback;

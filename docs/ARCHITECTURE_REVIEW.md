@@ -143,6 +143,24 @@ Phase 5 now adds the visible `/channel` runtime shell:
 
 The placeholder renderers intentionally do not perform real media playback yet. Quran rendering starts in Phase 6, break/announcement rendering deepens in Phase 7, and Android video/HLS bridge behavior starts in Phase 8.
 
+## Phase 6 Guidance
+
+Phase 6 now adds scheduled Quran page rendering:
+
+- Seeded pages 1-20 from the reference Hafs assets.
+- Generated `data/manifest.json` for the seeded page range.
+- Added `useQuranSchedulePlayback`.
+- Updated `QuranRenderer` to calculate current page from schedule offset, render the page image, preload current and next images only, and attempt audio alignment.
+- Updated `ChannelRuntime` to fetch the manifest and report current Quran page in heartbeat/runtime snapshots.
+
+Audio note:
+
+The local reference clone does not contain reciter MP3 files because those folders are gitignored. The renderer therefore treats audio as best-effort: it tries to load `/assets/reciters/{reciter}/PageNNN.mp3` paths from the manifest, reports errors, and keeps visual playback alive.
+
+Asset note:
+
+The full tracked Hafs reference set is about 123 MB. Phase 6 seeds only pages 1-20, matching the current schedule range, to avoid a large blind media dump. Full asset packaging belongs in the media-library/local-first phases.
+
 ## Android TV Guidance
 
 Android phases should use:

@@ -97,6 +97,17 @@ http://localhost:3737
 
 These endpoints are minimal early-phase implementations. They preserve useful paths from the reference app while the channel-first API is built in later phases.
 
+## Seed Quran Assets
+
+Phase 6 seeds pages 1-20 from the reference Hafs assets:
+
+```text
+data/assets/hafs/
+data/manifest.json
+```
+
+The reference repository does not include reciter MP3 folders in Git, so the Quran renderer attempts audio alignment when audio files are present and keeps visual playback running when they are missing.
+
 Write APIs require an admin token:
 
 ```powershell

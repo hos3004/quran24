@@ -1,0 +1,262 @@
+﻿[
+    {
+        "page":  1,
+        "imagePath":  "/assets/hafs/001.webp",
+        "jsonPath":  "/assets/hafs/001.json",
+        "audioPath":  "/assets/reciters/ajmy/Page001.mp3",
+        "audioDuration":  29.858,
+        "surah":  {
+                      "id":  1,
+                      "nameArabic":  "Ø§Ù„ÙØ§ØªØ­Ø©",
+                      "nameSimple":  "Al-Fatihah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  2,
+        "imagePath":  "/assets/hafs/002.webp",
+        "jsonPath":  "/assets/hafs/002.json",
+        "audioPath":  "/assets/reciters/ajmy/Page002.mp3",
+        "audioDuration":  37.512,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  3,
+        "imagePath":  "/assets/hafs/003.webp",
+        "jsonPath":  "/assets/hafs/003.json",
+        "audioPath":  "/assets/reciters/ajmy/Page003.mp3",
+        "audioDuration":  121.443,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  4,
+        "imagePath":  "/assets/hafs/004.webp",
+        "jsonPath":  "/assets/hafs/004.json",
+        "audioPath":  "/assets/reciters/ajmy/Page004.mp3",
+        "audioDuration":  134.766,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  5,
+        "imagePath":  "/assets/hafs/005.webp",
+        "jsonPath":  "/assets/hafs/005.json",
+        "audioPath":  "/assets/reciters/ajmy/Page005.mp3",
+        "audioDuration":  120.973,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  6,
+        "imagePath":  "/assets/hafs/006.webp",
+        "jsonPath":  "/assets/hafs/006.json",
+        "audioPath":  "/assets/reciters/ajmy/Page006.mp3",
+        "audioDuration":  134.896,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  7,
+        "imagePath":  "/assets/hafs/007.webp",
+        "jsonPath":  "/assets/hafs/007.json",
+        "audioPath":  "/assets/reciters/ajmy/Page007.mp3",
+        "audioDuration":  136.908,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  8,
+        "imagePath":  "/assets/hafs/008.webp",
+        "jsonPath":  "/assets/hafs/008.json",
+        "audioPath":  "/assets/reciters/ajmy/Page008.mp3",
+        "audioDuration":  119.693,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  9,
+        "imagePath":  "/assets/hafs/009.webp",
+        "jsonPath":  "/assets/hafs/009.json",
+        "audioPath":  "/assets/reciters/ajmy/Page009.mp3",
+        "audioDuration":  118.909,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  10,
+        "imagePath":  "/assets/hafs/010.webp",
+        "jsonPath":  "/assets/hafs/010.json",
+        "audioPath":  "/assets/reciters/ajmy/Page010.mp3",
+        "audioDuration":  121.992,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  11,
+        "imagePath":  "/assets/hafs/011.webp",
+        "jsonPath":  "/assets/hafs/011.json",
+        "audioPath":  "/assets/reciters/ajmy/Page011.mp3",
+        "audioDuration":  125.91,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  12,
+        "imagePath":  "/assets/hafs/012.webp",
+        "jsonPath":  "/assets/hafs/012.json",
+        "audioPath":  "/assets/reciters/ajmy/Page012.mp3",
+        "audioDuration":  124.421,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  13,
+        "imagePath":  "/assets/hafs/013.webp",
+        "jsonPath":  "/assets/hafs/013.json",
+        "audioPath":  "/assets/reciters/ajmy/Page013.mp3",
+        "audioDuration":  125.858,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  14,
+        "imagePath":  "/assets/hafs/014.webp",
+        "jsonPath":  "/assets/hafs/014.json",
+        "audioPath":  "/assets/reciters/ajmy/Page014.mp3",
+        "audioDuration":  132.78,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  15,
+        "imagePath":  "/assets/hafs/015.webp",
+        "jsonPath":  "/assets/hafs/015.json",
+        "audioPath":  "/assets/reciters/ajmy/Page015.mp3",
+        "audioDuration":  119.745,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  16,
+        "imagePath":  "/assets/hafs/016.webp",
+        "jsonPath":  "/assets/hafs/016.json",
+        "audioPath":  "/assets/reciters/ajmy/Page016.mp3",
+        "audioDuration":  113.894,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  17,
+        "imagePath":  "/assets/hafs/017.webp",
+        "jsonPath":  "/assets/hafs/017.json",
+        "audioPath":  "/assets/reciters/ajmy/Page017.mp3",
+        "audioDuration":  112.431,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  18,
+        "imagePath":  "/assets/hafs/018.webp",
+        "jsonPath":  "/assets/hafs/018.json",
+        "audioPath":  "/assets/reciters/ajmy/Page018.mp3",
+        "audioDuration":  114.965,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  19,
+        "imagePath":  "/assets/hafs/019.webp",
+        "jsonPath":  "/assets/hafs/019.json",
+        "audioPath":  "/assets/reciters/ajmy/Page019.mp3",
+        "audioDuration":  155.193,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    },
+    {
+        "page":  20,
+        "imagePath":  "/assets/hafs/020.webp",
+        "jsonPath":  "/assets/hafs/020.json",
+        "audioPath":  "/assets/reciters/ajmy/Page020.mp3",
+        "audioDuration":  129.306,
+        "surah":  {
+                      "id":  2,
+                      "nameArabic":  "Ø§Ù„Ø¨Ù‚Ø±Ø©",
+                      "nameSimple":  "Al-Baqarah"
+                  },
+        "juz":  1
+    }
+]

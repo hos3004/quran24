@@ -459,3 +459,72 @@ Notes:
 - Primary Phase 5 commit: `7d991cc`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 5 push without rewriting published history.
+
+## Phase 6 Summary
+
+Status: completed
+
+Goal:
+
+- Integrate real Quran page rendering under schedule control.
+- Respect `reciterId`, `fromPage`, `toPage`, and schedule offset.
+- Preload only current and next page assets.
+- Keep visual playback running if audio is missing.
+
+What changed:
+
+- Seeded pages 1-20 from `livestreamquran-reference/data/hafs`.
+- Added `data/manifest.json` for pages 1-20.
+- Updated `.gitignore` to allow committed seeded Hafs assets under `data/assets/hafs`.
+- Added `client/src/channel/hooks/useQuranSchedulePlayback.ts`.
+- Replaced the Quran placeholder with image rendering and audio alignment in `QuranRenderer.tsx`.
+- Updated `ChannelRuntime.tsx` to fetch manifest data and include current page in runtime snapshots/heartbeats.
+- Updated server JSON parsing to strip UTF-8 BOMs from generated JSON files.
+
+Reference used from `livestreamquran-reference`:
+
+- Reused page images and per-page JSON for pages 1-20.
+- Reused manifest page duration metadata for pages 1-20.
+- Reused the current/next preload idea from the old Quran renderer.
+- Reused the page-based audio path convention, adapted to `/assets/reciters/ajmy/PageNNN.mp3`.
+
+What was intentionally not reused:
+
+- Full 123 MB Hafs asset set.
+- Old renderer code as a direct copy.
+- Old audio hook as-is.
+- Any MP3 audio, because it is absent from the reference clone.
+
+## Phase 6 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 8 backend Node tests passed and 13 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Server smoke on port 3837:
+  - `GET /api/manifest` returned 200 with 20 pages.
+  - first manifest page is page 1.
+  - `GET /assets/hafs/001.webp` returned 200 with `image/webp`.
+  - `GET /channel` returned 200 and contained `<title>Quran24</title>`.
+
+Notes:
+
+- In-app Browser automation remains unavailable in this thread after tool discovery, so visual verification is limited to server smoke checks.
+- Audio files are still missing locally; visual Quran rendering is implemented and audio is best-effort until reciter assets are provided.
+
+## Phase 6 Git Update
+
+Pending commit and push.

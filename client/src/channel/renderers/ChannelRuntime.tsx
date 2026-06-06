@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { getActiveScheduleItem } from '../scheduler';
+import { useState } from 'react';
+import { calculateQuranPageFromOffset, getActiveScheduleItem, type QuranManifestEntry } from '../scheduler';
 import { emitHeartbeat } from '../logger';
 import { setRuntimeSnapshot } from '../runtimeStore';
 import { useChannelClock } from '../hooks/useChannelClock';
@@ -21,13 +22,39 @@ import { VideoBridgeRenderer } from './VideoBridgeRenderer';
 export function ChannelRuntime() {
   const scheduleState = useChannelSchedule();
   const clockState = useChannelClock();
+  const [manifest, setManifest] = useState<QuranManifestEntry[]>([]);
+  const [manifestError, setManifestError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/manifest', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Manifest request failed: ${response.status}`);
+        return response.json() as Promise<QuranManifestEntry[]>;
+      })
+      .then((data) => {
+        if (!cancelled) {
+          setManifest(data);
+          setManifestError(null);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) setManifestError(error instanceof Error ? error.message : String(error));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const active = useMemo(() => {
     if (!scheduleState.schedule || !clockState.serverNow) return null;
     return getActiveScheduleItem(scheduleState.schedule, clockState.serverNow);
   }, [scheduleState.schedule, clockState.serverNow]);
 
-  const currentPage = active?.item.type === 'quran' ? active.item.fromPage : undefined;
+  const currentPage = active?.item.type === 'quran'
+    ? calculateQuranPageFromOffset(active.item, manifest, active.offsetSec)?.page ?? active.item.fromPage
+    : undefined;
   const playState = scheduleState.loading || clockState.syncing ? 'loading' : active ? 'playing' : 'idle';
 
   useEffect(() => {
@@ -62,12 +89,12 @@ export function ChannelRuntime() {
     <main className="channel-runtime-shell">
       <section className="channel-stage">
         {active ? (
-          <RuntimeRenderer item={active.item} offsetSec={active.offsetSec} />
+          <RuntimeRenderer item={active.item} manifest={manifest} offsetSec={active.offsetSec} />
         ) : (
           <section className="channel-program channel-empty">
             <span className="program-kicker">Channel</span>
             <h2>Loading schedule</h2>
-            <p>{scheduleState.error || clockState.error || 'Waiting for channel state'}</p>
+            <p>{scheduleState.error || clockState.error || manifestError || 'Waiting for channel state'}</p>
           </section>
         )}
       </section>
@@ -97,15 +124,27 @@ export function ChannelRuntime() {
           <span>Validation</span>
           <strong>{scheduleState.validation?.ok ? 'valid' : scheduleState.validation ? 'invalid' : 'pending'}</strong>
         </div>
+        <div>
+          <span>Manifest</span>
+          <strong>{manifestError ? 'error' : `${manifest.length} pages`}</strong>
+        </div>
       </aside>
     </main>
   );
 }
 
-function RuntimeRenderer({ item, offsetSec }: { item: ChannelScheduleItem; offsetSec: number }) {
+function RuntimeRenderer({
+  item,
+  manifest,
+  offsetSec
+}: {
+  item: ChannelScheduleItem;
+  manifest: QuranManifestEntry[];
+  offsetSec: number;
+}) {
   switch (item.type) {
     case 'quran':
-      return <QuranRenderer item={item as QuranScheduleItem} offsetSec={offsetSec} />;
+      return <QuranRenderer item={item as QuranScheduleItem} manifest={manifest} offsetSec={offsetSec} />;
     case 'break':
       return <BreakRenderer item={item as BreakScheduleItem} offsetSec={offsetSec} />;
     case 'announcement':
@@ -124,4 +163,3 @@ function RuntimeRenderer({ item, offsetSec }: { item: ChannelScheduleItem; offse
       );
   }
 }
-

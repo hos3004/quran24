@@ -214,9 +214,39 @@ p {
   color: #f7f1df;
 }
 
+.channel-program small {
+  overflow-wrap: anywhere;
+  color: #d7a86a;
+  font-size: clamp(14px, 1.5vw, 20px);
+}
+
+.quran-page-frame {
+  width: min(420px, 45vw);
+  aspect-ratio: 2 / 3;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(225, 191, 119, 0.28);
+  border-radius: 8px;
+  background: #fbf4df;
+}
+
+.quran-page-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+.quran-page-missing {
+  color: #0b1117;
+  font-size: 28px;
+  font-weight: 800;
+}
+
 .channel-diagnostics {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1px;
   background: rgba(245, 240, 230, 0.12);
   border-top: 1px solid rgba(245, 240, 230, 0.12);

@@ -43,3 +43,5 @@ data/reciters/*
 !data/reciters/.gitkeep
 data/assets/*
 !data/assets/.gitkeep
+!data/assets/hafs/
+!data/assets/hafs/**

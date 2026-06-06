@@ -15,6 +15,9 @@ export type ActiveScheduleItem = {
 
 export type QuranManifestEntry = {
   page: number;
+  imagePath?: string | null;
+  jsonPath?: string | null;
+  audioPath?: string | null;
   audioDuration?: number;
   durationSec?: number;
 };
