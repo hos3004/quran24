@@ -247,6 +247,31 @@ Android Studio emulator smoke passed with:
 - settings screen showed visible D-pad focus
 - no `FATAL EXCEPTION` in the final smoke log
 
+## Phase 12 Guidance
+
+Phase 12 now adds Android-side bridge ingestion and heartbeat supervision:
+
+- `MainActivity` exposes `Quran24Android.postMessage(...)` and `AndroidBridge.postMessage(...)` to the WebView.
+- Bridge messages are size-limited and parsed as JSON on the main thread.
+- Android updates heartbeat state from `HEARTBEAT` events.
+- Android records `PLAY_VIDEO` and `PLAY_LIVE_STREAM` events without taking native playback ownership yet.
+- `REQUEST_RELOAD` events reload the WebView.
+- `RUNTIME_ERROR` events are logged through Android logcat.
+- A watchdog checks heartbeat freshness every 5 seconds.
+- If heartbeat stalls for the configured window, Android reloads WebView.
+- Repeated stalls fall back to the native recovery screen with Retry and Settings actions.
+- `/api/channel/status` now reports Phase 12, `runtime.androidBridgeReceiver: true`, and `runtime.androidWatchdog: true`.
+
+The final Android Studio emulator smoke confirmed:
+
+- `/channel` rendered fullscreen in WebView.
+- Android logcat received `HEARTBEAT` messages every 5 seconds.
+- Android logcat received `PLAY_LIVE_STREAM` for the Taraweeh placeholder item.
+- The web runtime detected the Android bridge and showed "Sent to Android native player".
+- No `FATAL EXCEPTION` appeared in the final smoke log.
+
+Phase 12 still intentionally leaves actual MP4/HLS rendering for Phase 13. This keeps the receiver/watchdog layer stable before Media3 introduces player lifecycle complexity.
+
 ## Android TV Guidance
 
 Android phases should use:

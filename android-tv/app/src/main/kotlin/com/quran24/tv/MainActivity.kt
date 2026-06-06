@@ -8,6 +8,10 @@ import android.graphics.drawable.GradientDrawable
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
+import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
@@ -18,6 +22,7 @@ import android.view.WindowManager
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import android.webkit.SslErrorHandler
+import android.webkit.JavascriptInterface
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -31,10 +36,24 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.webkit.WebViewCompat
+import org.json.JSONObject
 
 class MainActivity : Activity() {
     private lateinit var root: FrameLayout
     private var webView: WebView? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var pageLoadedAtElapsedMs = 0L
+    private var lastHeartbeatElapsedMs = 0L
+    private var lastWatchdogReloadElapsedMs = 0L
+    private var consecutiveWatchdogReloads = 0
+    private var activeBridgeItemId: String? = null
+    private var activeBridgePage: Int? = null
+    private val watchdogRunnable = object : Runnable {
+        override fun run() {
+            checkHeartbeatWatchdog()
+            mainHandler.postDelayed(this, WATCHDOG_CHECK_INTERVAL_MS)
+        }
+    }
     private val backCallback = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         OnBackInvokedCallback { handleBack() }
     } else {
@@ -55,18 +74,20 @@ class MainActivity : Activity() {
         setContentView(root)
         registerBackHandler()
         enterImmersiveMode()
-        loadChannel()
+        startWatchdog()
+        loadChannel(resetWatchdogAttempts = true)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         if (applyIntentChannelUrl(intent)) {
-            loadChannel()
+            loadChannel(resetWatchdogAttempts = true)
         }
     }
 
     override fun onDestroy() {
+        mainHandler.removeCallbacks(watchdogRunnable)
         unregisterBackHandler()
         webView?.destroy()
         webView = null
@@ -107,9 +128,13 @@ class MainActivity : Activity() {
         }
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
-    private fun loadChannel() {
+    @SuppressLint("SetJavaScriptEnabled", "AddJavascriptInterface")
+    private fun loadChannel(resetWatchdogAttempts: Boolean = false) {
         val channelUrl = ChannelPreferences.getChannelUrl(this)
+        if (resetWatchdogAttempts) {
+            consecutiveWatchdogReloads = 0
+        }
+        markChannelLoading()
         root.removeAllViews()
 
         val view = WebView(this).apply {
@@ -130,6 +155,8 @@ class MainActivity : Activity() {
             settings.allowContentAccess = false
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
             settings.userAgentString = "${settings.userAgentString} Quran24AndroidTV/0.1"
+            addJavascriptInterface(ChannelAndroidBridge(), "Quran24Android")
+            addJavascriptInterface(ChannelAndroidBridge(), "AndroidBridge")
             loadUrl(channelUrl)
         }
 
@@ -147,6 +174,8 @@ class MainActivity : Activity() {
     private fun showRecovery(message: String) {
         webView?.destroy()
         webView = null
+        pageLoadedAtElapsedMs = 0L
+        lastHeartbeatElapsedMs = 0L
         root.removeAllViews()
 
         val panel = LinearLayout(this).apply {
@@ -169,7 +198,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             setPadding(0, 18, 0, 30)
         }
-        val retry = recoveryButton(getString(R.string.retry)) { loadChannel() }
+        val retry = recoveryButton(getString(R.string.retry)) { loadChannel(resetWatchdogAttempts = true) }
         val settings = recoveryButton(getString(R.string.settings)) { openSettings() }
 
         panel.addView(title)
@@ -221,6 +250,107 @@ class MainActivity : Activity() {
         startActivity(Intent(this, HiddenSettingsActivity::class.java))
     }
 
+    private fun startWatchdog() {
+        mainHandler.removeCallbacks(watchdogRunnable)
+        mainHandler.postDelayed(watchdogRunnable, WATCHDOG_CHECK_INTERVAL_MS)
+    }
+
+    private fun markChannelLoading() {
+        val now = SystemClock.elapsedRealtime()
+        pageLoadedAtElapsedMs = now
+        lastHeartbeatElapsedMs = now
+        activeBridgeItemId = null
+        activeBridgePage = null
+    }
+
+    private fun markChannelLoaded() {
+        val now = SystemClock.elapsedRealtime()
+        pageLoadedAtElapsedMs = now
+        lastHeartbeatElapsedMs = now
+        consecutiveWatchdogReloads = 0
+    }
+
+    private fun handleBridgeMessage(message: String) {
+        if (message.length > MAX_BRIDGE_MESSAGE_CHARS) {
+            Log.w(TAG, "Ignoring oversized bridge message")
+            return
+        }
+
+        val event = runCatching { JSONObject(message) }.getOrElse { error ->
+            Log.w(TAG, "Ignoring malformed bridge message: ${error.message}")
+            return
+        }
+
+        when (val type = event.optString("type")) {
+            "HEARTBEAT" -> {
+                lastHeartbeatElapsedMs = SystemClock.elapsedRealtime()
+                consecutiveWatchdogReloads = 0
+                activeBridgeItemId = event.optString("currentItemId").takeIf { it.isNotBlank() }
+                activeBridgePage = event.optInt("currentPage", 0).takeIf { it > 0 }
+                Log.d(TAG, "Heartbeat item=$activeBridgeItemId page=$activeBridgePage")
+            }
+            "PLAY_VIDEO",
+            "PLAY_LIVE_STREAM" -> {
+                activeBridgeItemId = event.optString("itemId").takeIf { it.isNotBlank() }
+                Log.i(TAG, "Bridge event $type item=$activeBridgeItemId source=${event.optString("source")}")
+            }
+            "REQUEST_RELOAD" -> {
+                Log.w(TAG, "Web runtime requested reload: ${event.optString("reason")}")
+                reloadChannel("bridge_request")
+            }
+            "RUNTIME_ERROR" -> {
+                Log.e(TAG, "Web runtime error: ${event.optString("message")}")
+            }
+            else -> Log.w(TAG, "Unknown bridge event type: $type")
+        }
+    }
+
+    private fun checkHeartbeatWatchdog() {
+        val currentWebView = webView ?: return
+        val now = SystemClock.elapsedRealtime()
+        val lastHeartbeat = lastHeartbeatElapsedMs.takeIf { it > 0L } ?: pageLoadedAtElapsedMs
+        if (lastHeartbeat <= 0L) return
+
+        val stalledForMs = now - lastHeartbeat
+        if (stalledForMs < WATCHDOG_STALL_THRESHOLD_MS) return
+        if (now - lastWatchdogReloadElapsedMs < WATCHDOG_RELOAD_COOLDOWN_MS) return
+
+        consecutiveWatchdogReloads += 1
+        if (consecutiveWatchdogReloads > MAX_CONSECUTIVE_WATCHDOG_RELOADS) {
+            Log.e(TAG, "Heartbeat stalled after $consecutiveWatchdogReloads watchdog reload attempts")
+            showRecovery(getString(R.string.watchdog_recovery_message))
+            return
+        }
+
+        lastWatchdogReloadElapsedMs = now
+        Log.w(
+            TAG,
+            "Heartbeat stalled for ${stalledForMs}ms; reloading WebView attempt $consecutiveWatchdogReloads"
+        )
+        currentWebView.post { reloadChannel("heartbeat_watchdog") }
+    }
+
+    private fun reloadChannel(reason: String) {
+        val currentWebView = webView
+        markChannelLoading()
+        if (currentWebView == null) {
+            Log.w(TAG, "Reload requested without WebView: $reason")
+            loadChannel()
+            return
+        }
+
+        Log.w(TAG, "Reloading channel WebView: $reason")
+        currentWebView.reload()
+    }
+
+    private fun sendWebRuntimeCommand(command: JSONObject) {
+        val serialized = JSONObject.quote(command.toString())
+        webView?.evaluateJavascript(
+            "window.quran24ReceiveCommand && window.quran24ReceiveCommand($serialized);",
+            null
+        )
+    }
+
     private fun isSettingsShortcut(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN) return false
 
@@ -268,6 +398,11 @@ class MainActivity : Activity() {
     }
 
     private inner class ChannelWebViewClient : WebViewClient() {
+        override fun onPageFinished(view: WebView, url: String) {
+            markChannelLoaded()
+            sendWebRuntimeCommand(JSONObject().put("type", "RESUME_CHANNEL"))
+        }
+
         override fun onReceivedError(
             view: WebView,
             request: WebResourceRequest,
@@ -307,7 +442,20 @@ class MainActivity : Activity() {
         }
     }
 
+    private inner class ChannelAndroidBridge {
+        @JavascriptInterface
+        fun postMessage(message: String) {
+            mainHandler.post { handleBridgeMessage(message) }
+        }
+    }
+
     companion object {
+        private const val TAG = "Quran24TV"
+        private const val WATCHDOG_CHECK_INTERVAL_MS = 5_000L
+        private const val WATCHDOG_STALL_THRESHOLD_MS = 20_000L
+        private const val WATCHDOG_RELOAD_COOLDOWN_MS = 15_000L
+        private const val MAX_CONSECUTIVE_WATCHDOG_RELOADS = 3
+        private const val MAX_BRIDGE_MESSAGE_CHARS = 16_384
         const val EXTRA_CHANNEL_URL = "channel_url"
     }
 }

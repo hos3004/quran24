@@ -9,4 +9,5 @@
     <string name="saved">Saved</string>
     <string name="launch_channel">Launch Channel</string>
     <string name="reset">Reset</string>
+    <string name="watchdog_recovery_message">Channel heartbeat stopped. Check the channel URL or network, then retry.</string>
 </resources>

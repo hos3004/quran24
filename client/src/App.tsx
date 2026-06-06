@@ -32,6 +32,8 @@ type ChannelStatusResponse = {
     channelRoute: string;
     androidBridge: boolean;
     androidTvShell?: boolean;
+    androidBridgeReceiver?: boolean;
+    androidWatchdog?: boolean;
     heartbeat: string;
   };
   compatibility: {

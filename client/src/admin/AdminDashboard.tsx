@@ -28,7 +28,14 @@ type AdminDiagnostics = {
     ok: boolean;
     phase: number;
     schedule: { loaded: boolean; activeVersion: number | null; source: string };
-    runtime: { channelRoute: string; androidBridge: boolean; androidTvShell?: boolean; heartbeat: string };
+    runtime: {
+      channelRoute: string;
+      androidBridge: boolean;
+      androidTvShell?: boolean;
+      androidBridgeReceiver?: boolean;
+      androidWatchdog?: boolean;
+      heartbeat: string;
+    };
     compatibility: { config: boolean; manifest: boolean; slides: boolean };
   } | null;
   errors: string[];
@@ -583,7 +590,7 @@ function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostic
       <div className="status-grid">
         <Metric label="Load State" value={loadState} />
         <Metric label="Service" value={diagnostics.health?.service ?? diagnostics.config?.service ?? 'quran24-channel'} />
-        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 11)} />
+        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 12)} />
         <Metric label="Schedule" value={String(diagnostics.channelStatus?.schedule.activeVersion ?? 'none')} />
       </div>
     </section>
@@ -890,6 +897,14 @@ function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagno
         <div>
           <span>Android TV Shell</span>
           <strong>{diagnostics.channelStatus?.runtime.androidTvShell ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Bridge Receiver</span>
+          <strong>{diagnostics.channelStatus?.runtime.androidBridgeReceiver ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Watchdog</span>
+          <strong>{diagnostics.channelStatus?.runtime.androidWatchdog ? 'ready' : 'pending'}</strong>
         </div>
         <div>
           <span>Compatibility APIs</span>

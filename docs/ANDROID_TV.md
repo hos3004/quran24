@@ -15,6 +15,8 @@ Current behavior:
 - Native hidden settings screen stores the channel URL in shared preferences.
 - Menu/Settings keys open settings when the device forwards them to the app.
 - Long press OK/DPAD_CENTER also opens settings for TV launchers that reserve Menu for system Home behavior.
+- JavaScript bridge objects `Quran24Android` and `AndroidBridge` receive web runtime events.
+- Heartbeat watchdog reloads WebView after a stalled heartbeat window and falls back to native recovery after repeated stalls.
 
 ## Build
 
@@ -66,6 +68,13 @@ Expected result:
 - `/channel` renders fullscreen in WebView.
 - Long press OK opens `Quran24 Settings`.
 - The first settings button has a visible focus state.
+- Logcat shows `Quran24TV` heartbeat messages when `/channel` is healthy.
+
+Useful logcat filter:
+
+```powershell
+& $adb -s emulator-5554 logcat -d -t 240 | Select-String -Pattern "Quran24TV|FATAL EXCEPTION|AndroidRuntime"
+```
 
 ## Local Security Scanner Note
 
@@ -73,6 +82,6 @@ During development, security software can flag actions such as Gradle wrapper ex
 
 ## Next Android Phases
 
-- Phase 12: bridge receiver and WebView heartbeat watchdog.
+- Phase 12: bridge receiver and WebView heartbeat watchdog. Completed.
 - Phase 13: Media3/ExoPlayer MP4 and HLS playback for video/live stream items.
 - Phase 14: offline cache and local-first recovery.

@@ -951,3 +951,84 @@ Notes:
 - Primary Phase 11 commit: `1e5bab9`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 11 push without rewriting published history.
+
+## Phase 12 Summary
+
+Status: completed
+
+Goal:
+
+- Add Android-side bridge ingestion for web runtime events.
+- Track WebView heartbeat health natively.
+- Reload WebView when heartbeat stalls.
+- Keep video/HLS playback ownership deferred to the Media3 phase.
+
+What changed:
+
+- Added JavaScript interfaces named `Quran24Android` and `AndroidBridge` in `MainActivity`.
+- Added native parsing for bridge event types:
+  - `HEARTBEAT`
+  - `PLAY_VIDEO`
+  - `PLAY_LIVE_STREAM`
+  - `REQUEST_RELOAD`
+  - `RUNTIME_ERROR`
+- Added heartbeat state tracking in Android.
+- Added WebView watchdog checks every 5 seconds.
+- Added WebView reload on heartbeat stall.
+- Added native recovery fallback after repeated watchdog reload attempts.
+- Added native command sender for `window.quran24ReceiveCommand(...)`.
+- Updated `/api/channel/status` to report Phase 12, `androidBridgeReceiver: true`, and `androidWatchdog: true`.
+- Updated admin diagnostics to display Android bridge receiver and watchdog readiness.
+- Updated Android TV docs and architecture notes.
+
+What was intentionally not added:
+
+- No Media3/ExoPlayer playback yet.
+- No native MP4/HLS surface yet.
+- No offline cache yet.
+- No change to Quran rendering as page images plus audio.
+
+## Phase 12 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+cd android-tv
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.17.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+cd ..
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 12 start.
+- `git pull --ff-only`: already up to date.
+- Android build passed.
+- Android lint passed.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 16 backend Node tests and 20 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- `GET /api/channel/status` returned `phase: 12`, `runtime.androidBridgeReceiver: true`, and `runtime.androidWatchdog: true`.
+- Android Studio TV emulator smoke:
+  - device: `emulator-5554`
+  - `adb reverse tcp:3737 tcp:3837` mapped the app's local channel URL to the Quran24 server on port 3837.
+  - `/channel` rendered fullscreen in WebView.
+  - logcat showed `Quran24TV` heartbeat messages.
+  - logcat showed `PLAY_LIVE_STREAM` for `live-taraweeh-placeholder`.
+  - final smoke log contained no `FATAL EXCEPTION`.
+  - screenshot showed the web runtime detected Android bridge availability and rendered "Sent to Android native player".
+
+Notes:
+
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837` plus `adb reverse`.
+- Phase 12 observes video/live-stream requests but does not play them natively; Media3 ownership begins in Phase 13.
