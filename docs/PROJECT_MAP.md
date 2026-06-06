@@ -55,6 +55,7 @@ Target flow:
 14. Web runtime falls back to cached schedule, cached manifest, and local clock when server APIs are unavailable.
 15. Web runtime posts compact remote telemetry heartbeats for admin diagnostics.
 16. Web runtime reports uncaught errors and asks Android to reload stalled channel loads.
+17. Admin diagnostics summarizes Friday override, Taraweeh readiness, spiritual fillers, and Quran coverage.
 
 ## CURRENT_ENTRYPOINTS
 
@@ -81,6 +82,7 @@ Target repository:
 - Admin dashboard:
   - `client/src/admin/AdminDashboard.tsx`
   - `client/src/admin/scheduleEditorUtils.ts`
+- Religious schedule insights: `server/channel/religiousSchedule.mjs`
 - Runtime utilities:
   - `client/src/channel/logger.ts`
   - `client/src/channel/runtimeStore.ts`
@@ -98,6 +100,7 @@ Target repository:
   - `GET /api/health`
   - `GET /api/channel/status`
   - `GET /api/channel/schedule`
+  - `GET /api/channel/religious-schedule`
   - `POST /api/channel/schedule/validate`
   - `PATCH /api/channel/schedule`
   - `GET /api/config`

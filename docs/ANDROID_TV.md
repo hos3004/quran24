@@ -23,6 +23,7 @@ Current behavior:
 - The web runtime stores last-good schedule and manifest payloads in localStorage and uses local clock fallback when server time is unavailable.
 - The web runtime posts remote telemetry heartbeats so `/admin?section=diagnostics` can show online/stale device status.
 - The web runtime reports uncaught errors and loading stalls through `RUNTIME_ERROR` and `REQUEST_RELOAD` bridge events.
+- Admin diagnostics can show Friday override, Taraweeh readiness, spiritual fillers, and Quran page coverage.
 
 ## Build
 
@@ -79,6 +80,7 @@ Expected result:
 - Media3 logs appear when video or HLS bridge events are active.
 - Offline smoke can show `Clock Source local` when the server is unavailable after a prior successful load.
 - Diagnostics can show the emulator/device after `/channel` has posted at least one telemetry heartbeat.
+- Diagnostics can show religious schedule readiness from `/api/channel/religious-schedule`.
 
 Useful logcat filter:
 
@@ -97,3 +99,4 @@ During development, security software can flag actions such as Gradle wrapper ex
 - Phase 14: offline cache and local-first recovery. Completed for WebView cache, schedule cache, manifest cache, and local clock fallback.
 - Phase 15: remote telemetry and admin device diagnostics. Completed through WebView runtime heartbeat upload.
 - Phase 16: long-run stability hardening. Completed for web runtime error reporting, error boundary reload requests, and loading-stall watchdog.
+- Phase 17: religious schedule insights. Completed for Friday override, Taraweeh readiness, spiritual filler inventory, and Quran page coverage diagnostics.

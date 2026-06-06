@@ -89,6 +89,8 @@ export function validateSchedule(schedule, options = {}) {
     errors.push(`defaultFallbackItemId does not match any item: ${schedule.defaultFallbackItemId}`);
   }
 
+  validateReligiousMetadata(schedule.religious, itemIds, errors, warnings);
+
   return { ok: errors.length === 0, errors, warnings };
 }
 
@@ -214,6 +216,40 @@ function requireDuration(prefix, item, errors) {
   }
 }
 
+function validateReligiousMetadata(value, itemIds, errors, warnings) {
+  if (value === undefined) return;
+  if (!isPlainObject(value)) {
+    errors.push('religious must be an object when provided');
+    return;
+  }
+
+  if (value.profile !== undefined && !isNonEmptyString(value.profile)) {
+    errors.push('religious.profile must be a non-empty string when provided');
+  }
+
+  for (const field of ['fridayReminderItemIds', 'taraweehLiveStreamItemIds', 'spiritualFillerItemIds']) {
+    validateOptionalIdList(`religious.${field}`, value[field], itemIds, errors, warnings);
+  }
+}
+
+function validateOptionalIdList(prefix, value, itemIds, errors, warnings) {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    errors.push(`${prefix} must be an array when provided`);
+    return;
+  }
+
+  value.forEach((itemId, index) => {
+    if (!isNonEmptyString(itemId)) {
+      errors.push(`${prefix}[${index}] must be a non-empty item id`);
+      return;
+    }
+    if (!itemIds.has(itemId)) {
+      warnings.push(`${prefix}[${index}] does not match a schedule item: ${itemId}`);
+    }
+  });
+}
+
 function validateMediaList(prefix, value, field, errors, options = {}) {
   if (value === undefined) {
     if (options.required) errors.push(`${prefix}.${field} is required`);
@@ -296,4 +332,3 @@ function isValidTimeZone(value) {
     return false;
   }
 }
-

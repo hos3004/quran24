@@ -99,10 +99,18 @@ export type ChannelScheduleDays = Partial<Record<WeekdayKey, ChannelScheduleItem
   daily: ChannelScheduleItem[];
 };
 
+export type ReligiousScheduleMetadata = {
+  profile?: string;
+  fridayReminderItemIds?: string[];
+  taraweehLiveStreamItemIds?: string[];
+  spiritualFillerItemIds?: string[];
+};
+
 export type ChannelSchedule = ScheduleMetadata & {
   timezone: string;
   defaultFallbackItemId: string;
   days: ChannelScheduleDays;
+  religious?: ReligiousScheduleMetadata;
 };
 
 export type ScheduleValidationResult = {
@@ -110,4 +118,3 @@ export type ScheduleValidationResult = {
   errors: string[];
   warnings: string[];
 };
-

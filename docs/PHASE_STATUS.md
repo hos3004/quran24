@@ -1378,3 +1378,89 @@ Notes:
 - Primary Phase 16 commit: `cace903`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 16 push without rewriting published history.
+
+## Phase 17 Summary
+
+Status: completed
+
+Goal:
+
+- Add religious scheduling enhancements after runtime stability.
+- Make Friday/Jumuah and Taraweeh readiness visible in admin diagnostics.
+- Keep the implementation independent from external prayer-time or Hijri calendar assumptions.
+
+What changed:
+
+- Added `server/channel/religiousSchedule.mjs`.
+- Added `GET /api/channel/religious-schedule`.
+- Updated `/api/channel/status` to report Phase 17 and religious schedule flags:
+  - `religiousScheduleInsights: true`
+  - `fridayOverrideAwareness: true`
+  - `taraweehReadiness: true`
+  - `spiritualFillerInventory: true`
+- Added optional `religious` schedule metadata type.
+- Updated schedule validation to accept optional religious metadata and warn on missing item-id references.
+- Updated `data/channel/schedule.json` to version 4.
+- Added Friday override programming using the already seeded Quran pages and break slides.
+- Added Friday reminder, Friday dua break, Taraweeh readiness metadata, and spiritual filler metadata.
+- Updated admin diagnostics to show Friday override, Taraweeh readiness, spiritual filler count, Quran coverage, and schedule recommendations.
+- Added backend tests for religious schedule insights and metadata validation.
+- Updated README, project map, architecture review, and Android TV docs.
+
+What was intentionally not added:
+
+- No external prayer-time API integration.
+- No Hijri date conversion or Ramadan date authority yet.
+- No location-specific calculation method.
+- No automatic replacement of the full day schedule from prayer times.
+
+## Phase 17 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+npm run test
+npm run build
+npm run lint
+node -e "<schedule checksum verification>"
+cd android-tv
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.17.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+cd ..
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 17 start.
+- `git pull --ff-only`: already up to date.
+- `npm run test`: 20 backend Node tests and 28 client Vitest tests passed.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Schedule checksum verification passed:
+  - version: `4`
+  - `checksumMatches: true`
+  - Friday item count: `4`
+- Android build passed.
+- Android lint passed.
+- API smoke on `PORT=3837` returned:
+  - `GET /api/health`: `ok: true`
+  - `GET /api/channel/status`: `phase: 17`, `runtime.religiousScheduleInsights: true`
+  - `GET /api/channel/religious-schedule`: `fridayScheduleConfigured: true`
+  - `taraweehLiveStreamConfigured: true`
+  - `spiritualFillerCount: 4`
+  - `quranPageSpan.coveredPages: 20`
+  - recommendations count: `0`
+- The temporary server was stopped after smoke.
+- `Get-NetTCPConnection -LocalPort 3837 -State Listen` returned no listener after smoke.
+
+Notes:
+
+- Religious insights are readiness diagnostics, not authoritative prayer-time scheduling.
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.

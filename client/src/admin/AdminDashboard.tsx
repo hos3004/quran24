@@ -44,7 +44,18 @@ type AdminDiagnostics = {
       webRuntimeErrorBoundary?: boolean;
       webRuntimeStallWatchdog?: boolean;
       boundedTelemetryRetention?: boolean;
+      religiousScheduleInsights?: boolean;
+      fridayOverrideAwareness?: boolean;
+      taraweehReadiness?: boolean;
+      spiritualFillerInventory?: boolean;
       heartbeat: string;
+    };
+    religiousSchedule?: {
+      loaded: boolean;
+      fridayScheduleConfigured: boolean;
+      taraweehLiveStreamConfigured: boolean;
+      spiritualFillerCount: number;
+      quranCoveredPages: number;
     };
     telemetry?: {
       loaded: boolean;
@@ -55,8 +66,37 @@ type AdminDiagnostics = {
     };
     compatibility: { config: boolean; manifest: boolean; slides: boolean };
   } | null;
+  religiousSchedule: ReligiousSchedule | null;
   telemetry: TelemetryStatus | null;
   errors: string[];
+};
+
+type ReligiousSchedule = {
+  ok: boolean;
+  generatedAt: string;
+  scheduleVersion: number | null;
+  timezone: string | null;
+  metadata: {
+    profile: string;
+    fridayReminderItemIds: string[];
+    taraweehLiveStreamItemIds: string[];
+    spiritualFillerItemIds: string[];
+  };
+  summary: {
+    fridayScheduleConfigured: boolean;
+    fridayItemCount: number;
+    taraweehLiveStreamConfigured: boolean;
+    taraweehItemIds: string[];
+    spiritualFillerCount: number;
+    spiritualFillerItemIds: string[];
+    quranItemCount: number;
+    quranPageSpan: {
+      coveredPages: number;
+      firstPage: number | null;
+      lastPage: number | null;
+    };
+  };
+  recommendations: string[];
 };
 
 type TelemetryDeviceStatus = {
@@ -647,9 +687,10 @@ function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostic
       <div className="status-grid">
         <Metric label="Load State" value={loadState} />
         <Metric label="Service" value={diagnostics.health?.service ?? diagnostics.config?.service ?? 'quran24-channel'} />
-        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 16)} />
+        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 17)} />
         <Metric label="Schedule" value={String(diagnostics.channelStatus?.schedule.activeVersion ?? 'none')} />
         <Metric label="Devices Online" value={`${diagnostics.telemetry?.onlineDevices ?? diagnostics.channelStatus?.telemetry?.onlineDevices ?? 0}/${diagnostics.telemetry?.totalDevices ?? diagnostics.channelStatus?.telemetry?.totalDevices ?? 0}`} />
+        <Metric label="Friday Override" value={diagnostics.religiousSchedule?.summary.fridayScheduleConfigured || diagnostics.channelStatus?.religiousSchedule?.fridayScheduleConfigured ? 'ready' : 'pending'} />
       </div>
     </section>
   );
@@ -927,6 +968,7 @@ function MediaPanel() {
 
 function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostics; loadState: LoadState }) {
   const compatibility = diagnostics.channelStatus?.compatibility;
+  const religiousSchedule = diagnostics.religiousSchedule;
   const [telemetry, setTelemetry] = useState<TelemetryStatus | null>(diagnostics.telemetry);
   const [telemetryMessage, setTelemetryMessage] = useState('Loading telemetry');
 
@@ -1031,6 +1073,26 @@ function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagno
           <strong>{diagnostics.channelStatus?.runtime.boundedTelemetryRetention ? 'bounded' : 'pending'}</strong>
         </div>
         <div>
+          <span>Religious Insights</span>
+          <strong>{diagnostics.channelStatus?.runtime.religiousScheduleInsights ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Friday Override</span>
+          <strong>{religiousSchedule?.summary.fridayScheduleConfigured || diagnostics.channelStatus?.religiousSchedule?.fridayScheduleConfigured ? 'configured' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Taraweeh Readiness</span>
+          <strong>{religiousSchedule?.summary.taraweehLiveStreamConfigured || diagnostics.channelStatus?.religiousSchedule?.taraweehLiveStreamConfigured ? 'configured' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Spiritual Fillers</span>
+          <strong>{religiousSchedule?.summary.spiritualFillerCount ?? diagnostics.channelStatus?.religiousSchedule?.spiritualFillerCount ?? 0}</strong>
+        </div>
+        <div>
+          <span>Quran Coverage</span>
+          <strong>{religiousSchedule?.summary.quranPageSpan.coveredPages ?? diagnostics.channelStatus?.religiousSchedule?.quranCoveredPages ?? 0} pages</strong>
+        </div>
+        <div>
           <span>Devices Online</span>
           <strong>{telemetry ? `${telemetry.onlineDevices}/${telemetry.totalDevices}` : 'Unavailable'}</strong>
         </div>
@@ -1052,6 +1114,12 @@ function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagno
         </div>
       </div>
       <div className="diagnostics-table compact">
+        {(religiousSchedule?.recommendations ?? []).slice(0, 4).map((recommendation) => (
+          <div key={recommendation}>
+            <span>Schedule Guidance</span>
+            <strong>{recommendation}</strong>
+          </div>
+        ))}
         {(telemetry?.devices.slice(0, 8) ?? []).map((device) => (
           <div key={device.deviceId}>
             <span>{device.deviceLabel}</span>

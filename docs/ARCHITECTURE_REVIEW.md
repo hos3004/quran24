@@ -333,6 +333,19 @@ Phase 16 now adds web runtime stability hardening:
 
 This phase does not replace the native Android watchdog. It adds a browser-side signal so the web runtime can ask Android for help before silence is the only failure mode. Future hardening can add persisted crash counters, remote alert rules, and supervised asset sync.
 
+## Phase 17 Guidance
+
+Phase 17 now adds religious scheduling enhancements without pretending to solve prayer-time calculation:
+
+- `server/channel/religiousSchedule.mjs` summarizes Friday override readiness, Taraweeh live stream readiness, spiritual filler inventory, and Quran page coverage.
+- `GET /api/channel/religious-schedule` exposes those insights for admin diagnostics.
+- `/api/channel/status` now reports Phase 17 with religious schedule capability flags.
+- The seed schedule is version 4 and includes optional `religious` metadata.
+- The seed schedule now has a Friday override with Quran recitation, a Friday reminder announcement, and a dua break using already seeded assets/pages.
+- The schedule validator accepts optional religious metadata and warns when metadata references unknown item ids.
+
+This phase intentionally avoids external prayer-time APIs, Hijri date conversion assumptions, and location-specific religious timing. Those should be added only when the deployment location policy, calculation method, and calendar authority are explicit.
+
 ## Android TV Guidance
 
 Android phases should use:

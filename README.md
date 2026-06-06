@@ -8,7 +8,7 @@ Quran24 is being built as a channel-first successor to the reference `livestream
 Schedule + local rendering + synchronized clock = TV-like channel
 ```
 
-The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, browser-to-Android bridge events, the Android TV fullscreen WebView shell, Android-side heartbeat watchdog, native Media3 playback for video/HLS bridge items, first-pass offline cache recovery, runtime telemetry/device diagnostics, and web runtime stability recovery. Deeper local asset packaging is added in later phases.
+The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, browser-to-Android bridge events, the Android TV fullscreen WebView shell, Android-side heartbeat watchdog, native Media3 playback for video/HLS bridge items, first-pass offline cache recovery, runtime telemetry/device diagnostics, web runtime stability recovery, and religious schedule insights. Deeper local asset packaging is added in later phases.
 
 ## Local Folders
 
@@ -96,6 +96,7 @@ http://localhost:3737
 - `GET /api/health`
 - `GET /api/channel/status`
 - `GET /api/channel/schedule`
+- `GET /api/channel/religious-schedule`
 - `POST /api/channel/schedule/validate`
 - `PATCH /api/channel/schedule`
 - `GET /api/config`
@@ -120,6 +121,8 @@ Phase 10 connects `/admin?section=readers` and `/admin?section=media` to the rec
 Phase 15 adds runtime telemetry. The `/channel` web runtime posts a compact heartbeat every 15 seconds to `/api/telemetry/heartbeat`. The server stores latest device status in ignored local file `data/channel/telemetry.json`, exposes `/api/telemetry/devices`, and the admin Diagnostics section shows online/stale devices.
 
 Phase 16 adds long-run stability hardening. The web runtime installs global error reporting, wraps `/channel` in a React error boundary, reports runtime errors to the Android bridge, and requests a native WebView reload if the runtime stays stuck in loading for too long.
+
+Phase 17 adds religious schedule insights. The seed schedule now includes Friday programming metadata, a safe Friday override using the available seeded Quran pages, Taraweeh readiness detection, and spiritual filler inventory for admin diagnostics.
 
 ## Seed Quran Assets
 

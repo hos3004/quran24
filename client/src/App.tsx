@@ -45,7 +45,18 @@ type ChannelStatusResponse = {
     webRuntimeErrorBoundary?: boolean;
     webRuntimeStallWatchdog?: boolean;
     boundedTelemetryRetention?: boolean;
+    religiousScheduleInsights?: boolean;
+    fridayOverrideAwareness?: boolean;
+    taraweehReadiness?: boolean;
+    spiritualFillerInventory?: boolean;
     heartbeat: string;
+  };
+  religiousSchedule?: {
+    loaded: boolean;
+    fridayScheduleConfigured: boolean;
+    taraweehLiveStreamConfigured: boolean;
+    spiritualFillerCount: number;
+    quranCoveredPages: number;
   };
   telemetry?: {
     loaded: boolean;
@@ -59,6 +70,34 @@ type ChannelStatusResponse = {
     manifest: boolean;
     slides: boolean;
   };
+};
+
+type ReligiousScheduleResponse = {
+  ok: boolean;
+  generatedAt: string;
+  scheduleVersion: number | null;
+  timezone: string | null;
+  metadata: {
+    profile: string;
+    fridayReminderItemIds: string[];
+    taraweehLiveStreamItemIds: string[];
+    spiritualFillerItemIds: string[];
+  };
+  summary: {
+    fridayScheduleConfigured: boolean;
+    fridayItemCount: number;
+    taraweehLiveStreamConfigured: boolean;
+    taraweehItemIds: string[];
+    spiritualFillerCount: number;
+    spiritualFillerItemIds: string[];
+    quranItemCount: number;
+    quranPageSpan: {
+      coveredPages: number;
+      firstPage: number | null;
+      lastPage: number | null;
+    };
+  };
+  recommendations: string[];
 };
 
 type TelemetryStatusResponse = {
@@ -102,6 +141,7 @@ type DiagnosticsState = {
   config: ApiConfig | null;
   health: HealthResponse | null;
   channelStatus: ChannelStatusResponse | null;
+  religiousSchedule: ReligiousScheduleResponse | null;
   telemetry: TelemetryStatusResponse | null;
   errors: string[];
 };
@@ -117,6 +157,7 @@ export function App() {
     config: null,
     health: null,
     channelStatus: null,
+    religiousSchedule: null,
     telemetry: null,
     errors: []
   });
@@ -129,11 +170,12 @@ export function App() {
       fetchJson<ApiConfig>('/api/config'),
       fetchJson<HealthResponse>('/api/health'),
       fetchJson<ChannelStatusResponse>('/api/channel/status'),
+      fetchJson<ReligiousScheduleResponse>('/api/channel/religious-schedule'),
       fetchJson<TelemetryStatusResponse>('/api/telemetry/devices')
-    ]).then(([configResult, healthResult, statusResult, telemetryResult]) => {
+    ]).then(([configResult, healthResult, statusResult, religiousResult, telemetryResult]) => {
       if (cancelled) return;
 
-      const errors = [configResult, healthResult, statusResult, telemetryResult]
+      const errors = [configResult, healthResult, statusResult, religiousResult, telemetryResult]
         .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
         .map((result) => result.reason instanceof Error ? result.reason.message : String(result.reason));
 
@@ -141,6 +183,7 @@ export function App() {
         config: configResult.status === 'fulfilled' ? configResult.value : null,
         health: healthResult.status === 'fulfilled' ? healthResult.value : null,
         channelStatus: statusResult.status === 'fulfilled' ? statusResult.value : null,
+        religiousSchedule: religiousResult.status === 'fulfilled' ? religiousResult.value : null,
         telemetry: telemetryResult.status === 'fulfilled' ? telemetryResult.value : null,
         errors
       });

@@ -8,6 +8,7 @@ import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { createMediaScanner } from './channel/mediaScanner.mjs';
 import { createReciterStore } from './channel/reciterStore.mjs';
+import { summarizeReligiousSchedule } from './channel/religiousSchedule.mjs';
 import { createScheduleStore } from './channel/scheduleStore.mjs';
 import { createTelemetryStore } from './channel/telemetryStore.mjs';
 
@@ -91,10 +92,16 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/channel/status', (_req, res) => {
   let schedule = null;
   let telemetry = null;
+  let religiousSchedule = null;
   try {
     schedule = scheduleStore.loadSchedule();
   } catch (error) {
     log('error', 'schedule_status_load_failed', { message: error.message });
+  }
+  try {
+    religiousSchedule = schedule ? summarizeReligiousSchedule(schedule) : null;
+  } catch (error) {
+    log('warn', 'religious_schedule_status_failed', { message: error.message });
   }
   try {
     telemetry = telemetryStore.getStatus();
@@ -108,7 +115,7 @@ app.get('/api/channel/status', (_req, res) => {
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 16,
+    phase: 17,
     schedule: {
       loaded: Boolean(schedule),
       activeVersion: schedule?.version ?? null,
@@ -131,7 +138,18 @@ app.get('/api/channel/status', (_req, res) => {
       webRuntimeErrorBoundary: true,
       webRuntimeStallWatchdog: true,
       boundedTelemetryRetention: true,
+      religiousScheduleInsights: true,
+      fridayOverrideAwareness: true,
+      taraweehReadiness: true,
+      spiritualFillerInventory: true,
       heartbeat: 'every-5-sec'
+    },
+    religiousSchedule: {
+      loaded: Boolean(religiousSchedule),
+      fridayScheduleConfigured: religiousSchedule?.summary.fridayScheduleConfigured ?? false,
+      taraweehLiveStreamConfigured: religiousSchedule?.summary.taraweehLiveStreamConfigured ?? false,
+      spiritualFillerCount: religiousSchedule?.summary.spiritualFillerCount ?? 0,
+      quranCoveredPages: religiousSchedule?.summary.quranPageSpan.coveredPages ?? 0
     },
     telemetry: {
       loaded: Boolean(telemetry),
@@ -146,6 +164,16 @@ app.get('/api/channel/status', (_req, res) => {
       slides: true
     }
   });
+});
+
+app.get('/api/channel/religious-schedule', (_req, res) => {
+  try {
+    const schedule = scheduleStore.loadSchedule();
+    res.json(summarizeReligiousSchedule(schedule));
+  } catch (error) {
+    log('error', 'religious_schedule_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to load religious schedule insights' });
+  }
 });
 
 app.post('/api/telemetry/heartbeat', (req, res) => {
