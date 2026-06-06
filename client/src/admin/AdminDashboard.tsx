@@ -177,6 +177,76 @@ type RecitersResponse = {
   validation?: ScheduleValidationResult;
 };
 
+type ChannelTheme = {
+  id: string;
+  name: string;
+  frame: string;
+  background: string;
+  quranZoom: number;
+  page: { x: number; y: number; w: number; h: number };
+  info?: { x: number; y: number; w: number; h: number };
+  tags?: string[];
+};
+
+type ThemesResponse = {
+  ok: boolean;
+  activeThemeId: string;
+  themes: ChannelTheme[];
+  validation?: ScheduleValidationResult;
+};
+
+type ProgrammingTemplate = {
+  version: number;
+  timezone: string;
+  defaultFallbackItemId: string;
+  pageCursor: number;
+  rotation: {
+    reciters: RotationPolicy;
+    themes: RotationPolicy;
+  };
+  fillers: ProgrammingFiller[];
+  blocks: ProgrammingBlock[];
+  specialDays: {
+    friday: { enabled: boolean; reminderItemIds: string[] };
+    ramadan: { enabled: boolean; taraweehLiveStreamUrl: string };
+  };
+};
+
+type RotationPolicy = {
+  mode: 'fixed' | 'rotate';
+  fixedId?: string;
+  pool: string[];
+  avoidImmediateRepeat: boolean;
+};
+
+type ProgrammingBlock = {
+  id: string;
+  title: string;
+  start: string;
+  durationSec: number;
+  fromPage: number;
+  toPage: number;
+  preferredTags: string[];
+  reciterId?: string;
+  themeId?: string;
+};
+
+type ProgrammingFiller = {
+  id: string;
+  type: 'break' | 'announcement' | 'audio_message';
+  title: string;
+  durationSec: number;
+  slides?: string[];
+  audio?: string;
+  message?: string;
+};
+
+type ProgrammingResponse = {
+  ok: boolean;
+  template: ProgrammingTemplate;
+  validation: ScheduleValidationResult;
+};
+
 type MediaIndex = {
   ok: boolean;
   generatedAt: string;
@@ -198,7 +268,7 @@ type MediaIndex = {
   missingFiles: { source: string; ownerId: string; path: string; reason: string }[];
 };
 
-const adminSections = ['general', 'readers', 'schedule', 'media', 'diagnostics'] as const;
+const adminSections = ['programming', 'readers', 'themes', 'fillers', 'schedule', 'diagnostics'] as const;
 type AdminSection = typeof adminSections[number];
 
 const dayOptions: WeekdayKey[] = [
@@ -240,22 +310,214 @@ export function AdminDashboard({
           ))}
         </nav>
 
-        {section === 'schedule' ? (
+        {section === 'programming' ? (
+          <ProgrammingPanel />
+        ) : section === 'schedule' ? (
           <ScheduleEditor />
         ) : section === 'diagnostics' ? (
           <DiagnosticsPanel diagnostics={diagnostics} loadState={loadState} />
         ) : section === 'readers' ? (
           <ReadersPanel />
-        ) : section === 'media' ? (
-          <MediaPanel />
+        ) : section === 'themes' ? (
+          <ThemesPanel />
+        ) : section === 'fillers' ? (
+          <FillersPanel />
         ) : (
-          <GeneralPanel diagnostics={diagnostics} loadState={loadState} />
+          <ProgrammingPanel />
         )}
       </div>
     </main>
   );
 }
 
+function ProgrammingPanel() {
+  const [template, setTemplate] = useState<ProgrammingTemplate | null>(null);
+  const [validation, setValidation] = useState<ScheduleValidationResult | null>(null);
+  const [generated, setGenerated] = useState<ChannelSchedule | null>(null);
+  const [adminToken, setAdminToken] = useState('');
+  const [message, setMessage] = useState('Loading programming template');
+  const [busy, setBusy] = useState(false);
+
+  const loadTemplate = useCallback(() => {
+    setBusy(true);
+    fetch('/api/channel/programming-template', { cache: 'no-store' })
+      .then((response) => response.json() as Promise<ProgrammingResponse>)
+      .then((payload) => {
+        setTemplate(payload.template);
+        setValidation(payload.validation);
+        setMessage('Programming template loaded');
+      })
+      .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
+      .finally(() => setBusy(false));
+  }, []);
+
+  useEffect(() => {
+    loadTemplate();
+  }, [loadTemplate]);
+
+  function updateTemplate(patch: Partial<ProgrammingTemplate>) {
+    setTemplate((current) => current ? { ...current, ...patch } : current);
+  }
+
+  function updatePolicy(kind: 'reciters' | 'themes', patch: Partial<RotationPolicy>) {
+    setTemplate((current) => current ? {
+      ...current,
+      rotation: {
+        ...current.rotation,
+        [kind]: { ...current.rotation[kind], ...patch }
+      }
+    } : current);
+  }
+
+  function updateBlock(id: string, patch: Partial<ProgrammingBlock>) {
+    setTemplate((current) => current ? {
+      ...current,
+      blocks: current.blocks.map((block) => block.id === id ? { ...block, ...patch } : block)
+    } : current);
+  }
+
+  async function saveTemplate() {
+    if (!template) return;
+    if (!adminToken.trim()) {
+      setMessage('Admin token required');
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch('/api/channel/programming-template', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken.trim() },
+        body: JSON.stringify(template)
+      });
+      const payload = await response.json() as ProgrammingResponse & { error?: string };
+      if (!response.ok || !payload.ok) {
+        setValidation(payload.validation);
+        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'Template save failed');
+        return;
+      }
+      setTemplate(payload.template);
+      setValidation(payload.validation);
+      setMessage('Programming template saved');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function generateSchedule() {
+    if (!template) return;
+    setBusy(true);
+    try {
+      const response = await fetch('/api/channel/programming-template/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template })
+      });
+      const payload = await response.json() as { ok: boolean; schedule: ChannelSchedule; validation: ScheduleValidationResult; error?: string };
+      setGenerated(payload.schedule);
+      setValidation(payload.validation);
+      setMessage(payload.ok ? `Generated ${payload.schedule.days.daily.length} schedule items` : payload.validation.errors.join(' | '));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function publishGenerated() {
+    if (!generated) {
+      setMessage('Generate a schedule first');
+      return;
+    }
+    if (!adminToken.trim()) {
+      setMessage('Admin token required');
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch('/api/channel/schedule', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken.trim(), 'x-admin-user': 'programming-panel' },
+        body: JSON.stringify({ ...generated, status: 'published', publishedAt: new Date().toISOString() })
+      });
+      const payload = await response.json() as SaveResponse;
+      setValidation(payload.validation);
+      setMessage(payload.ok ? `Published generated schedule v${payload.schedule?.version}` : payload.validation?.errors.join(' | ') || 'Publish failed');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!template) {
+    return (
+      <section className="admin-panel">
+        <h2>Daily Programming</h2>
+        <p>{message}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="admin-panel">
+      <div className="admin-panel-title">
+        <h2>Daily Programming</h2>
+        <strong>{template.blocks.length} blocks / {template.fillers.length} fillers</strong>
+      </div>
+      <div className="form-grid">
+        <label>
+          Timezone
+          <input value={template.timezone} onChange={(event) => updateTemplate({ timezone: event.target.value })} />
+        </label>
+        <label>
+          Page Cursor
+          <input type="number" min="1" max="604" value={template.pageCursor} onChange={(event) => updateTemplate({ pageCursor: Number(event.target.value) })} />
+        </label>
+        <label>
+          Reciter Pool
+          <input value={template.rotation.reciters.pool.join(', ')} onChange={(event) => updatePolicy('reciters', { pool: splitIds(event.target.value) })} />
+        </label>
+        <label>
+          Theme Pool
+          <input value={template.rotation.themes.pool.join(', ')} onChange={(event) => updatePolicy('themes', { pool: splitIds(event.target.value) })} />
+        </label>
+        <label className="checkbox-row">
+          <input type="checkbox" checked={template.rotation.reciters.avoidImmediateRepeat} onChange={(event) => updatePolicy('reciters', { avoidImmediateRepeat: event.target.checked })} />
+          Avoid repeating reciters
+        </label>
+        <label className="checkbox-row">
+          <input type="checkbox" checked={template.rotation.themes.avoidImmediateRepeat} onChange={(event) => updatePolicy('themes', { avoidImmediateRepeat: event.target.checked })} />
+          Avoid repeating themes
+        </label>
+        <label>
+          Admin Token
+          <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
+        </label>
+      </div>
+      <div className="diagnostics-table compact">
+        {template.blocks.map((block) => (
+          <div key={block.id}>
+            <span>{block.start}</span>
+            <strong>
+              <input value={block.title} onChange={(event) => updateBlock(block.id, { title: event.target.value })} />
+              <span>{block.fromPage}-{block.toPage} / {formatSeconds(block.durationSec)}</span>
+            </strong>
+          </div>
+        ))}
+      </div>
+      <div className="admin-actions">
+        <button type="button" onClick={saveTemplate} disabled={busy}>Save Template</button>
+        <button type="button" onClick={generateSchedule} disabled={busy}>Generate Day</button>
+        <button type="button" onClick={publishGenerated} disabled={busy || !generated}>Publish Generated</button>
+        <button type="button" onClick={loadTemplate} disabled={busy}>Reload</button>
+      </div>
+      <p className="admin-message">{message}</p>
+      <ValidationPanel validation={validation} />
+    </section>
+  );
+}
 function ScheduleEditor() {
   const [schedule, setSchedule] = useState<ChannelSchedule | null>(null);
   const [validation, setValidation] = useState<ScheduleValidationResult | null>(null);
@@ -607,7 +869,11 @@ function QuranFields({ item, onChange }: { item: QuranScheduleItem; onChange: (p
         <input type="number" min="1" max="604" value={item.toPage} onChange={(event) => onChange({ toPage: Number(event.target.value) })} />
       </label>
       <label>
-        Layout Preset
+        Theme ID
+        <input value={item.themeId ?? ''} onChange={(event) => onChange({ themeId: event.target.value || undefined })} />
+      </label>
+      <label>
+        Legacy Layout Preset
         <input type="number" min="1" value={item.layoutPresetId ?? ''} onChange={(event) => onChange({ layoutPresetId: numberOrUndefined(event.target.value) })} />
       </label>
       <label className="checkbox-row">
@@ -615,6 +881,307 @@ function QuranFields({ item, onChange }: { item: QuranScheduleItem; onChange: (p
         Auto Continue
       </label>
     </div>
+  );
+}
+
+function ThemesPanel() {
+  const [data, setData] = useState<ThemesResponse | null>(null);
+  const [adminToken, setAdminToken] = useState('');
+  const [message, setMessage] = useState('Loading themes');
+  const [busy, setBusy] = useState(false);
+
+  const loadThemes = useCallback(() => {
+    setBusy(true);
+    fetch('/api/themes', { cache: 'no-store' })
+      .then((response) => response.json() as Promise<ThemesResponse>)
+      .then((payload) => {
+        setData(payload);
+        setMessage('Themes loaded');
+      })
+      .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
+      .finally(() => setBusy(false));
+  }, []);
+
+  useEffect(() => {
+    loadThemes();
+  }, [loadThemes]);
+
+  function updateTheme(id: string, patch: Partial<ChannelTheme>) {
+    setData((current) => current ? {
+      ...current,
+      themes: current.themes.map((theme) => theme.id === id ? { ...theme, ...patch } : theme)
+    } : current);
+  }
+
+  function addTheme() {
+    setData((current) => {
+      if (!current) return current;
+      const id = `theme-${current.themes.length + 1}`;
+      return {
+        ...current,
+        activeThemeId: current.activeThemeId || id,
+        themes: [
+          ...current.themes,
+          {
+            id,
+            name: `Theme ${current.themes.length + 1}`,
+            frame: '/assets/frames/frame-preset2.png',
+            background: '#000000',
+            quranZoom: 0.82,
+            page: { x: 1036, y: 185, w: 825, h: 680 },
+            tags: ['day']
+          }
+        ]
+      };
+    });
+  }
+
+  async function saveThemes() {
+    if (!data) return;
+    if (!adminToken.trim()) {
+      setMessage('Admin token required');
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch('/api/themes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken.trim() },
+        body: JSON.stringify({ activeThemeId: data.activeThemeId, themes: data.themes })
+      });
+      const payload = await response.json() as ThemesResponse & { error?: string };
+      if (!response.ok || !payload.ok) {
+        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'Theme save failed');
+        return;
+      }
+      setData(payload);
+      setMessage('Themes saved');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function scanThemes() {
+    if (!adminToken.trim()) {
+      setMessage('Admin token required');
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch('/api/themes/scan', { method: 'POST', headers: { 'x-admin-token': adminToken.trim() } });
+      if (!response.ok) throw new Error(`Theme scan failed: ${response.status}`);
+      setMessage('Theme folders scanned');
+      loadThemes();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!data) {
+    return (
+      <section className="admin-panel">
+        <h2>Themes</h2>
+        <p>{message}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="admin-panel">
+      <div className="admin-panel-title">
+        <h2>Themes</h2>
+        <strong>{data.themes.length} available</strong>
+      </div>
+      <div className="form-grid">
+        <label>
+          Active Theme
+          <select value={data.activeThemeId} onChange={(event) => setData({ ...data, activeThemeId: event.target.value })}>
+            {data.themes.map((theme) => <option key={theme.id} value={theme.id}>{theme.name}</option>)}
+          </select>
+        </label>
+        <label>
+          Admin Token
+          <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
+        </label>
+      </div>
+      <div className="reciter-list">
+        {data.themes.map((theme) => (
+          <div key={theme.id} className="theme-row">
+            <label>
+              ID
+              <input value={theme.id} onChange={(event) => updateTheme(theme.id, { id: event.target.value })} />
+            </label>
+            <label>
+              Name
+              <input value={theme.name} onChange={(event) => updateTheme(theme.id, { name: event.target.value })} />
+            </label>
+            <label>
+              Frame
+              <input value={theme.frame} onChange={(event) => updateTheme(theme.id, { frame: event.target.value })} />
+            </label>
+            <label>
+              Tags
+              <input value={(theme.tags ?? []).join(', ')} onChange={(event) => updateTheme(theme.id, { tags: splitIds(event.target.value) })} />
+            </label>
+            <label>
+              Zoom
+              <input type="number" step="0.01" value={theme.quranZoom} onChange={(event) => updateTheme(theme.id, { quranZoom: Number(event.target.value) })} />
+            </label>
+          </div>
+        ))}
+      </div>
+      <div className="admin-actions">
+        <button type="button" onClick={addTheme} disabled={busy}>Add Theme</button>
+        <button type="button" onClick={scanThemes} disabled={busy}>Scan Theme Folders</button>
+        <button type="button" onClick={saveThemes} disabled={busy}>Save Themes</button>
+        <button type="button" onClick={loadThemes} disabled={busy}>Reload</button>
+      </div>
+      <p className="admin-message">{message}</p>
+    </section>
+  );
+}
+
+function FillersPanel() {
+  const [template, setTemplate] = useState<ProgrammingTemplate | null>(null);
+  const [adminToken, setAdminToken] = useState('');
+  const [message, setMessage] = useState('Loading fillers');
+  const [busy, setBusy] = useState(false);
+
+  const loadTemplate = useCallback(() => {
+    setBusy(true);
+    fetch('/api/channel/programming-template', { cache: 'no-store' })
+      .then((response) => response.json() as Promise<ProgrammingResponse>)
+      .then((payload) => {
+        setTemplate(payload.template);
+        setMessage('Fillers loaded');
+      })
+      .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
+      .finally(() => setBusy(false));
+  }, []);
+
+  useEffect(() => {
+    loadTemplate();
+  }, [loadTemplate]);
+
+  function updateFiller(id: string, patch: Partial<ProgrammingFiller>) {
+    setTemplate((current) => current ? {
+      ...current,
+      fillers: current.fillers.map((filler) => filler.id === id ? { ...filler, ...patch } : filler)
+    } : current);
+  }
+
+  function addFiller() {
+    setTemplate((current) => current ? {
+      ...current,
+      fillers: [
+        ...current.fillers,
+        {
+          id: `filler-${current.fillers.length + 1}`,
+          type: 'break',
+          title: `Filler ${current.fillers.length + 1}`,
+          durationSec: 120,
+          slides: ['/assets/slides/dua-1.jpeg']
+        }
+      ]
+    } : current);
+  }
+
+  async function saveFillers() {
+    if (!template) return;
+    if (!adminToken.trim()) {
+      setMessage('Admin token required');
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch('/api/channel/programming-template', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken.trim() },
+        body: JSON.stringify(template)
+      });
+      const payload = await response.json() as ProgrammingResponse & { error?: string };
+      if (!response.ok || !payload.ok) {
+        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'Fillers save failed');
+        return;
+      }
+      setTemplate(payload.template);
+      setMessage('Fillers saved');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!template) {
+    return (
+      <section className="admin-panel">
+        <h2>Fillers</h2>
+        <p>{message}</p>
+      </section>
+    );
+  }
+
+  return (
+    <>
+      <section className="admin-panel">
+        <div className="admin-panel-title">
+          <h2>Fillers and Announcements</h2>
+          <strong>{template.fillers.length} configured</strong>
+        </div>
+        <div className="form-grid">
+          <label>
+            Admin Token
+            <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
+          </label>
+        </div>
+        <div className="reciter-list">
+          {template.fillers.map((filler) => (
+            <div key={filler.id} className="theme-row">
+              <label>
+                ID
+                <input value={filler.id} onChange={(event) => updateFiller(filler.id, { id: event.target.value })} />
+              </label>
+              <label>
+                Type
+                <select value={filler.type} onChange={(event) => updateFiller(filler.id, { type: event.target.value as ProgrammingFiller['type'] })}>
+                  <option value="break">Visual Break</option>
+                  <option value="announcement">Announcement</option>
+                  <option value="audio_message">Audio Message</option>
+                </select>
+              </label>
+              <label>
+                Title
+                <input value={filler.title} onChange={(event) => updateFiller(filler.id, { title: event.target.value })} />
+              </label>
+              <label>
+                Duration
+                <input type="number" min="1" value={filler.durationSec} onChange={(event) => updateFiller(filler.id, { durationSec: Number(event.target.value) })} />
+              </label>
+              <label>
+                Slides
+                <textarea value={stringifyMediaList(filler.slides)} onChange={(event) => updateFiller(filler.id, { slides: parseMediaList(event.target.value) })} />
+              </label>
+              <label>
+                Audio
+                <input value={filler.audio ?? ''} onChange={(event) => updateFiller(filler.id, { audio: event.target.value || undefined })} />
+              </label>
+            </div>
+          ))}
+        </div>
+        <div className="admin-actions">
+          <button type="button" onClick={addFiller} disabled={busy}>Add Filler</button>
+          <button type="button" onClick={saveFillers} disabled={busy}>Save Fillers</button>
+          <button type="button" onClick={loadTemplate} disabled={busy}>Reload</button>
+        </div>
+        <p className="admin-message">{message}</p>
+      </section>
+      <MediaPanel />
+    </>
   );
 }
 
@@ -683,22 +1250,6 @@ function ValidationPanel({ validation }: { validation: ScheduleValidationResult 
         {validation?.warnings.map((warning) => <p key={warning}>{warning}</p>)}
       </div>
     </div>
-  );
-}
-
-function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostics; loadState: LoadState }) {
-  return (
-    <section className="admin-panel">
-      <h2>General</h2>
-      <div className="status-grid">
-        <Metric label="Load State" value={loadState} />
-        <Metric label="Service" value={diagnostics.health?.service ?? diagnostics.config?.service ?? 'quran24-channel'} />
-        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 18)} />
-        <Metric label="Schedule" value={String(diagnostics.channelStatus?.schedule.activeVersion ?? 'none')} />
-        <Metric label="Devices Online" value={`${diagnostics.telemetry?.onlineDevices ?? diagnostics.channelStatus?.telemetry?.onlineDevices ?? 0}/${diagnostics.telemetry?.totalDevices ?? diagnostics.channelStatus?.telemetry?.totalDevices ?? 0}`} />
-        <Metric label="Friday Override" value={diagnostics.religiousSchedule?.summary.fridayScheduleConfigured || diagnostics.channelStatus?.religiousSchedule?.fridayScheduleConfigured ? 'ready' : 'pending'} />
-      </div>
-    </section>
   );
 }
 
@@ -1176,15 +1727,16 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function getRequestedSection(): AdminSection {
   const value = new URLSearchParams(window.location.search).get('section') as AdminSection | null;
-  return value && adminSections.includes(value) ? value : 'general';
+  return value && adminSections.includes(value) ? value : 'programming';
 }
 
 function sectionLabel(section: AdminSection) {
   const labels: Record<AdminSection, string> = {
-    general: 'General',
+    programming: 'Daily Programming',
     readers: 'Readers',
-    schedule: 'Channel Schedule',
-    media: 'Media Library',
+    themes: 'Themes',
+    fillers: 'Fillers',
+    schedule: 'Schedule and Publish',
     diagnostics: 'Diagnostics'
   };
   return labels[section];
@@ -1196,4 +1748,11 @@ function typeLabel(type: ChannelScheduleItem['type']) {
 
 function numberOrUndefined(value: string) {
   return value.trim() === '' ? undefined : Number(value);
+}
+
+function splitIds(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }

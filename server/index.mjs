@@ -7,10 +7,13 @@ import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { createMediaScanner } from './channel/mediaScanner.mjs';
+import { createProgrammingStore } from './channel/programmingStore.mjs';
 import { createReciterStore } from './channel/reciterStore.mjs';
 import { summarizeReligiousSchedule } from './channel/religiousSchedule.mjs';
+import { generateScheduleFromTemplate } from './channel/scheduleGenerator.mjs';
 import { createScheduleStore } from './channel/scheduleStore.mjs';
 import { createTelemetryStore } from './channel/telemetryStore.mjs';
+import { createThemeStore } from './channel/themeStore.mjs';
 
 dotenv.config();
 
@@ -51,6 +54,8 @@ function log(level, event, fields = {}) {
 const packageJson = readJsonIfExists(join(ROOT, 'package.json'), { version: '0.0.0' });
 const scheduleStore = createScheduleStore({ rootDir: ROOT, logger: log });
 const reciterStore = createReciterStore({ rootDir: ROOT, logger: log });
+const themeStore = createThemeStore({ rootDir: ROOT, logger: log });
+const programmingStore = createProgrammingStore({ rootDir: ROOT, logger: log });
 const mediaScanner = createMediaScanner({ rootDir: ROOT, logger: log });
 const telemetryStore = createTelemetryStore({ rootDir: ROOT, logger: log });
 
@@ -93,6 +98,8 @@ app.get('/api/channel/status', (_req, res) => {
   let schedule = null;
   let telemetry = null;
   let religiousSchedule = null;
+  let themes = null;
+  let template = null;
   try {
     schedule = scheduleStore.loadSchedule();
   } catch (error) {
@@ -107,6 +114,16 @@ app.get('/api/channel/status', (_req, res) => {
     telemetry = telemetryStore.getStatus();
   } catch (error) {
     log('warn', 'telemetry_status_load_failed', { message: error.message });
+  }
+  try {
+    themes = themeStore.loadThemes();
+  } catch (error) {
+    log('warn', 'themes_status_load_failed', { message: error.message });
+  }
+  try {
+    template = programmingStore.loadTemplate();
+  } catch (error) {
+    log('warn', 'programming_template_status_load_failed', { message: error.message });
   }
 
   res.json({
@@ -147,7 +164,20 @@ app.get('/api/channel/status', (_req, res) => {
       remoteReloadCommand: true,
       webViewAssetLoader: true,
       bundledFallbackScreen: true,
+      themeLibrary: true,
+      programmingTemplateGenerator: true,
+      reciterThemeRotation: true,
       heartbeat: 'every-5-sec'
+    },
+    programming: {
+      loaded: Boolean(template),
+      blockCount: template?.blocks?.length ?? 0,
+      fillerCount: template?.fillers?.length ?? 0
+    },
+    themes: {
+      loaded: Boolean(themes),
+      totalThemes: themes?.themes?.length ?? 0,
+      activeThemeId: themes?.activeThemeId ?? null
     },
     religiousSchedule: {
       loaded: Boolean(religiousSchedule),
@@ -257,6 +287,55 @@ app.patch('/api/channel/schedule', requireAdminWrite, (req, res) => {
   }
 });
 
+app.get('/api/channel/programming-template', (_req, res) => {
+  try {
+    const template = programmingStore.loadTemplate();
+    const validation = programmingStore.validateTemplate(template);
+    res.json({ ok: true, template, validation });
+  } catch (error) {
+    log('error', 'programming_template_get_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to load programming template' });
+  }
+});
+
+app.patch('/api/channel/programming-template', requireAdminWrite, (req, res) => {
+  try {
+    const result = programmingStore.saveTemplate(req.body || {});
+    if (!result.ok) {
+      res.status(400).json(result);
+      return;
+    }
+    res.json(result);
+  } catch (error) {
+    log('error', 'programming_template_patch_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to save programming template' });
+  }
+});
+
+app.post('/api/channel/programming-template/generate', (req, res) => {
+  try {
+    const template = req.body?.template ? programmingStore.validateTemplate(req.body.template).ok ? req.body.template : programmingStore.loadTemplate() : programmingStore.loadTemplate();
+    const reciters = reciterStore.loadReciters().reciters;
+    const themes = themeStore.loadThemes().themes;
+    const current = scheduleStore.loadSchedule();
+    const schedule = generateScheduleFromTemplate({
+      template,
+      reciters,
+      themes,
+      version: Math.max(1, Number(current?.version || 0) + 1),
+      status: req.body?.status === 'published' ? 'published' : 'draft',
+      publishedBy: req.get('x-admin-user') || 'programming-generator'
+    });
+    const validation = scheduleStore.validateSchedule(schedule, {
+      knownReciterIds: reciters.map((reciter) => reciter.id)
+    });
+    res.json({ ok: validation.ok, schedule, validation });
+  } catch (error) {
+    log('error', 'programming_template_generate_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to generate schedule' });
+  }
+});
+
 app.get('/api/reciters', (_req, res) => {
   try {
     res.json({ ok: true, ...reciterStore.loadReciters() });
@@ -277,6 +356,38 @@ app.patch('/api/reciters', requireAdminWrite, (req, res) => {
   } catch (error) {
     log('error', 'reciters_patch_failed', { message: error.message });
     res.status(500).json({ ok: false, error: 'Failed to save reciters' });
+  }
+});
+
+app.get('/api/themes', (_req, res) => {
+  try {
+    res.json(themeStore.loadThemes());
+  } catch (error) {
+    log('error', 'themes_get_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to load themes' });
+  }
+});
+
+app.patch('/api/themes', requireAdminWrite, (req, res) => {
+  try {
+    const result = themeStore.saveThemes(req.body || {});
+    if (!result.ok) {
+      res.status(400).json(result);
+      return;
+    }
+    res.json(result);
+  } catch (error) {
+    log('error', 'themes_patch_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to save themes' });
+  }
+});
+
+app.post('/api/themes/scan', requireAdminWrite, (_req, res) => {
+  try {
+    res.json(themeStore.scanThemeFolders({ persist: true }));
+  } catch (error) {
+    log('error', 'themes_scan_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to scan themes' });
   }
 });
 

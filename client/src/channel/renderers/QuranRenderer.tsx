@@ -1,21 +1,46 @@
-import type { QuranScheduleItem } from '../types';
+import type { CSSProperties } from 'react';
+import type { ChannelTheme, QuranScheduleItem } from '../types';
 import type { QuranManifestEntry } from '../scheduler';
 import { useQuranSchedulePlayback } from '../hooks/useQuranSchedulePlayback';
+
+const DEFAULT_THEME: ChannelTheme = {
+  id: 'classic-gold',
+  name: 'Classic Gold',
+  frame: '/assets/frames/frame-preset2.png',
+  background: '#000000',
+  quranZoom: 0.82,
+  page: { x: 1036, y: 185, w: 825, h: 680 },
+  tags: ['default']
+};
 
 export function QuranRenderer({
   item,
   manifest,
-  offsetSec
+  offsetSec,
+  themes
 }: {
   item: QuranScheduleItem;
   manifest: QuranManifestEntry[];
   offsetSec: number;
+  themes: ChannelTheme[];
 }) {
   const playback = useQuranSchedulePlayback(item, manifest, offsetSec);
   const page = playback.pageOffset?.page ?? item.fromPage;
+  const theme = themes.find((candidate) => candidate.id === item.themeId)
+    ?? themes.find((candidate) => candidate.id === `preset-${item.layoutPresetId}`)
+    ?? themes[0]
+    ?? DEFAULT_THEME;
+  const pageStyle = {
+    '--theme-bg': theme.background,
+    '--page-left': `${(theme.page.x / 1920) * 100}%`,
+    '--page-top': `${(theme.page.y / 1080) * 100}%`,
+    '--page-width': `${(theme.page.w / 1920) * 100}%`,
+    '--page-height': `${(theme.page.h / 1080) * 100}%`,
+    '--quran-zoom': `${theme.quranZoom * 100}%`
+  } as CSSProperties;
 
   return (
-    <section className="quran-broadcast-scene" aria-label="Quran program">
+    <section className="quran-broadcast-scene" aria-label="Quran program" style={pageStyle}>
       <div className="quran-reference-stage">
         <div className="quran-page-window">
           <div className="quran-page-mount">
@@ -28,7 +53,7 @@ export function QuranRenderer({
         </div>
         <img
           className="quran-frame-overlay"
-          src="/assets/frames/frame-preset2.png"
+          src={theme.frame}
           alt=""
           aria-hidden="true"
           draggable={false}
@@ -36,8 +61,8 @@ export function QuranRenderer({
       </div>
 
       <div className="quran-runtime-status" aria-hidden="true">
-        <span>{item.title}</span>
-        <strong>Page {page}</strong>
+        <span>{item.title} / {theme.name}</span>
+        <strong>{item.reciterId} / Page {page}</strong>
       </div>
 
       <span className="sr-only">

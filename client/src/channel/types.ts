@@ -41,7 +41,19 @@ export type QuranScheduleItem = BaseChannelItem & {
   fromPage: number;
   toPage: number;
   layoutPresetId?: number;
+  themeId?: string;
   allowAutoContinue?: boolean;
+};
+
+export type ChannelTheme = {
+  id: string;
+  name: string;
+  frame: string;
+  background: string;
+  quranZoom: number;
+  page: { x: number; y: number; w: number; h: number };
+  info?: { x: number; y: number; w: number; h: number };
+  tags?: string[];
 };
 
 export type BreakScheduleItem = BaseChannelItem & {

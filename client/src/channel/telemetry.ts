@@ -13,6 +13,7 @@ export type RuntimeTelemetryHeartbeat = {
   clockSource?: 'server' | 'local' | null;
   scheduleSource?: 'network' | 'cache' | null;
   manifestSource?: 'network' | 'cache' | null;
+  themeSource?: 'network' | 'cache' | null;
   manifestPageCount?: number;
   lastCommandType?: string;
 };
@@ -41,6 +42,7 @@ export async function postRuntimeTelemetry(heartbeat: RuntimeTelemetryHeartbeat)
     clockSource: heartbeat.clockSource ?? undefined,
     scheduleSource: heartbeat.scheduleSource ?? undefined,
     manifestSource: heartbeat.manifestSource ?? undefined,
+    themeSource: heartbeat.themeSource ?? undefined,
     manifestPageCount: heartbeat.manifestPageCount,
     lastCommandType: heartbeat.lastCommandType
   };

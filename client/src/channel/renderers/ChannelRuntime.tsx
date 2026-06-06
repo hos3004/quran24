@@ -11,6 +11,7 @@ import { useChannelSchedule } from '../hooks/useChannelSchedule';
 import type {
   AnnouncementScheduleItem,
   BreakScheduleItem,
+  ChannelTheme,
   ChannelScheduleItem,
   LiveStreamScheduleItem,
   QuranScheduleItem,
@@ -23,13 +24,16 @@ import { QuranRenderer } from './QuranRenderer';
 import { VideoBridgeRenderer } from './VideoBridgeRenderer';
 
 const MANIFEST_CACHE_KEY = 'quran24:quran-manifest:v1';
+const THEMES_CACHE_KEY = 'quran24:themes:v1';
 
 export function ChannelRuntime() {
   const scheduleState = useChannelSchedule();
   const clockState = useChannelClock();
   const [manifest, setManifest] = useState<QuranManifestEntry[]>([]);
+  const [themes, setThemes] = useState<ChannelTheme[]>([]);
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [manifestSource, setManifestSource] = useState<'network' | 'cache' | null>(null);
+  const [themeSource, setThemeSource] = useState<'network' | 'cache' | null>(null);
   const [lastCommand, setLastCommand] = useState<WebRuntimeCommand | null>(null);
   const telemetryRef = useRef<RuntimeTelemetryHeartbeat>({
     playState: 'loading'
@@ -80,6 +84,35 @@ export function ChannelRuntime() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/themes', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Themes request failed: ${response.status}`);
+        return response.json() as Promise<{ themes: ChannelTheme[] }>;
+      })
+      .then((data) => {
+        saveCachedPayload(THEMES_CACHE_KEY, data.themes);
+        if (!cancelled) {
+          setThemes(data.themes);
+          setThemeSource('network');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          const cached = loadCachedPayload<ChannelTheme[]>(THEMES_CACHE_KEY);
+          if (cached) {
+            setThemes(cached.value);
+            setThemeSource('cache');
+          }
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => subscribeWebRuntimeCommands((command) => {
     setLastCommand(command);
     logRuntime('info', 'web_runtime_command', {
@@ -110,6 +143,7 @@ export function ChannelRuntime() {
     clockSource: clockState.source,
     scheduleSource: scheduleState.source,
     manifestSource,
+    themeSource,
     manifestPageCount: manifest.length,
     lastCommandType: lastCommand?.type
   };
@@ -173,7 +207,7 @@ export function ChannelRuntime() {
     <main className="channel-runtime-shell">
       <section className="channel-stage">
         {active ? (
-          <RuntimeRenderer item={active.item} manifest={manifest} offsetSec={active.offsetSec} />
+          <RuntimeRenderer item={active.item} manifest={manifest} themes={themes} offsetSec={active.offsetSec} />
         ) : (
           <section className="channel-program channel-empty">
             <span className="program-kicker">Channel</span>
@@ -214,7 +248,7 @@ export function ChannelRuntime() {
         </div>
         <div>
           <span>Manifest</span>
-          <strong>{manifestError ? `${manifestSource ?? 'error'} / ${manifest.length} pages` : `${manifest.length} pages`}</strong>
+          <strong>{manifestError ? `${manifestSource ?? 'error'} / ${manifest.length} pages` : `${manifest.length} pages / themes ${themeSource ?? 'pending'}:${themes.length}`}</strong>
         </div>
         <div>
           <span>Schedule Source</span>
@@ -232,15 +266,17 @@ export function ChannelRuntime() {
 function RuntimeRenderer({
   item,
   manifest,
+  themes,
   offsetSec
 }: {
   item: ChannelScheduleItem;
   manifest: QuranManifestEntry[];
+  themes: ChannelTheme[];
   offsetSec: number;
 }) {
   switch (item.type) {
     case 'quran':
-      return <QuranRenderer item={item as QuranScheduleItem} manifest={manifest} offsetSec={offsetSec} />;
+      return <QuranRenderer item={item as QuranScheduleItem} manifest={manifest} themes={themes} offsetSec={offsetSec} />;
     case 'break':
       return <BreakRenderer item={item as BreakScheduleItem} offsetSec={offsetSec} />;
     case 'announcement':

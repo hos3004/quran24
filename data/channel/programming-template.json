@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "timezone": "Europe/Istanbul",
+  "defaultFallbackItemId": "fallback-quran",
+  "pageCursor": 1,
+  "rotation": {
+    "reciters": {
+      "mode": "rotate",
+      "pool": [
+        "ajmy",
+        "maher"
+      ],
+      "avoidImmediateRepeat": true
+    },
+    "themes": {
+      "mode": "rotate",
+      "pool": [
+        "classic-gold"
+      ],
+      "avoidImmediateRepeat": true
+    }
+  },
+  "fillers": [
+    {
+      "id": "short-dua-break",
+      "type": "break",
+      "title": "Spiritual visual break",
+      "durationSec": 180,
+      "slides": [
+        "/assets/slides/dua-1.jpeg",
+        "/assets/slides/dua-2.jpeg"
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "id": "fajr",
+      "title": "Fajr Quran",
+      "start": "05:00:00",
+      "durationSec": 7200,
+      "fromPage": 1,
+      "toPage": 20,
+      "preferredTags": [
+        "day"
+      ]
+    },
+    {
+      "id": "morning",
+      "title": "Morning Quran",
+      "start": "08:00:00",
+      "durationSec": 10800,
+      "fromPage": 1,
+      "toPage": 20,
+      "preferredTags": [
+        "day"
+      ]
+    },
+    {
+      "id": "afternoon",
+      "title": "Afternoon Quran",
+      "start": "13:00:00",
+      "durationSec": 10800,
+      "fromPage": 1,
+      "toPage": 20,
+      "preferredTags": [
+        "day"
+      ]
+    },
+    {
+      "id": "evening",
+      "title": "Evening Quran",
+      "start": "18:00:00",
+      "durationSec": 10800,
+      "fromPage": 1,
+      "toPage": 20,
+      "preferredTags": [
+        "night"
+      ]
+    },
+    {
+      "id": "night",
+      "title": "Night Quran",
+      "start": "22:00:00",
+      "durationSec": 7200,
+      "fromPage": 1,
+      "toPage": 20,
+      "preferredTags": [
+        "night"
+      ]
+    }
+  ],
+  "specialDays": {
+    "friday": {
+      "enabled": true,
+      "reminderItemIds": []
+    },
+    "ramadan": {
+      "enabled": false,
+      "taraweehLiveStreamUrl": ""
+    }
+  }
+}

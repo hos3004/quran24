@@ -90,7 +90,7 @@ export function useQuranSchedulePlayback(
     audio.addEventListener('playing', onPlaying);
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
     audio.preload = 'auto';
-    audio.src = currentEntry.audioPath;
+    audio.src = audioPathForReciter(currentEntry.audioPath, item.reciterId);
     audio.load();
     setAudioState('loading');
     setAudioError(null);
@@ -108,7 +108,7 @@ export function useQuranSchedulePlayback(
       audio.removeEventListener('playing', onPlaying);
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
     };
-  }, [currentEntry?.audioPath]);
+  }, [currentEntry?.audioPath, item.reciterId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -144,3 +144,8 @@ export function useQuranSchedulePlayback(
   };
 }
 
+function audioPathForReciter(audioPath: string, reciterId: string) {
+  const match = /^\/assets\/reciters\/([^/]+)\/(.+)$/.exec(audioPath);
+  if (!match) return audioPath;
+  return `/assets/reciters/${reciterId}/${match[2]}`;
+}

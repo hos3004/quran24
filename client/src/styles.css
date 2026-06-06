@@ -432,6 +432,21 @@ button:focus-visible,
   background: rgba(255, 255, 255, 0.035);
 }
 
+.theme-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid rgba(245, 240, 230, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.theme-row textarea {
+  min-height: 76px;
+}
+
 .media-missing-list {
   display: grid;
   gap: 8px;
@@ -577,15 +592,15 @@ button:focus-visible,
   position: relative;
   width: min(100vw, 177.7778vh);
   aspect-ratio: 16 / 9;
-  background: #000;
+  background: var(--theme-bg, #000);
 }
 
 .quran-page-window {
   position: absolute;
-  left: 53.958%;
-  top: 17.13%;
-  width: 42.969%;
-  height: 62.963%;
+  left: var(--page-left, 53.958%);
+  top: var(--page-top, 17.13%);
+  width: var(--page-width, 42.969%);
+  height: var(--page-height, 62.963%);
   z-index: 1;
   display: grid;
   place-items: center;
@@ -595,8 +610,8 @@ button:focus-visible,
 }
 
 .quran-page-mount {
-  width: 82%;
-  height: 82%;
+  width: var(--quran-zoom, 82%);
+  height: var(--quran-zoom, 82%);
   display: grid;
   place-items: center;
   background: #fffce7;
