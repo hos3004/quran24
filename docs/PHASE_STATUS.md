@@ -1208,3 +1208,10 @@ Notes:
 - Offline behavior currently depends on at least one prior successful online load.
 - Placeholder HLS still fails safely because `https://example.com/live/taraweeh.m3u8` is not a valid production stream.
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837` plus `adb reverse`.
+
+## Phase 14 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 14 commit: `3ff1e0c`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 14 push without rewriting published history.
