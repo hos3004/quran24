@@ -25,15 +25,18 @@ import { VideoBridgeRenderer } from './VideoBridgeRenderer';
 
 const MANIFEST_CACHE_KEY = 'quran24:quran-manifest:v1';
 const THEMES_CACHE_KEY = 'quran24:themes:v1';
+const SLIDES_CACHE_KEY = 'quran24:slides:v1';
 
 export function ChannelRuntime() {
   const scheduleState = useChannelSchedule();
   const clockState = useChannelClock();
   const [manifest, setManifest] = useState<QuranManifestEntry[]>([]);
   const [themes, setThemes] = useState<ChannelTheme[]>([]);
+  const [slides, setSlides] = useState<string[]>([]);
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [manifestSource, setManifestSource] = useState<'network' | 'cache' | null>(null);
   const [themeSource, setThemeSource] = useState<'network' | 'cache' | null>(null);
+  const [slidesSource, setSlidesSource] = useState<'network' | 'cache' | null>(null);
   const [lastCommand, setLastCommand] = useState<WebRuntimeCommand | null>(null);
   const telemetryRef = useRef<RuntimeTelemetryHeartbeat>({
     playState: 'loading'
@@ -104,6 +107,36 @@ export function ChannelRuntime() {
           if (cached) {
             setThemes(cached.value);
             setThemeSource('cache');
+          }
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/slides', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Slides request failed: ${response.status}`);
+        return response.json() as Promise<{ slides: string[] }>;
+      })
+      .then((data) => {
+        const slideList = Array.isArray(data.slides) ? data.slides : [];
+        saveCachedPayload(SLIDES_CACHE_KEY, slideList);
+        if (!cancelled) {
+          setSlides(slideList);
+          setSlidesSource('network');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          const cached = loadCachedPayload<string[]>(SLIDES_CACHE_KEY);
+          if (cached) {
+            setSlides(cached.value);
+            setSlidesSource('cache');
           }
         }
       });
@@ -207,7 +240,7 @@ export function ChannelRuntime() {
     <main className="channel-runtime-shell">
       <section className="channel-stage">
         {active ? (
-          <RuntimeRenderer item={active.item} manifest={manifest} themes={themes} offsetSec={active.offsetSec} />
+          <RuntimeRenderer item={active.item} manifest={manifest} themes={themes} slides={slides} offsetSec={active.offsetSec} />
         ) : (
           <section className="channel-program channel-empty">
             <span className="program-kicker">Channel</span>
@@ -248,7 +281,7 @@ export function ChannelRuntime() {
         </div>
         <div>
           <span>Manifest</span>
-          <strong>{manifestError ? `${manifestSource ?? 'error'} / ${manifest.length} pages` : `${manifest.length} pages / themes ${themeSource ?? 'pending'}:${themes.length}`}</strong>
+          <strong>{manifestError ? `${manifestSource ?? 'error'} / ${manifest.length} pages` : `${manifest.length} pages / themes ${themeSource ?? 'pending'}:${themes.length} / slides ${slidesSource ?? 'pending'}:${slides.length}`}</strong>
         </div>
         <div>
           <span>Schedule Source</span>
@@ -267,16 +300,18 @@ function RuntimeRenderer({
   item,
   manifest,
   themes,
+  slides,
   offsetSec
 }: {
   item: ChannelScheduleItem;
   manifest: QuranManifestEntry[];
   themes: ChannelTheme[];
+  slides: string[];
   offsetSec: number;
 }) {
   switch (item.type) {
     case 'quran':
-      return <QuranRenderer item={item as QuranScheduleItem} manifest={manifest} themes={themes} offsetSec={offsetSec} />;
+      return <QuranRenderer item={item as QuranScheduleItem} manifest={manifest} themes={themes} slides={slides} offsetSec={offsetSec} />;
     case 'break':
       return <BreakRenderer item={item as BreakScheduleItem} offsetSec={offsetSec} />;
     case 'announcement':

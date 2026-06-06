@@ -595,6 +595,55 @@ button:focus-visible,
   background: var(--theme-bg, #000);
 }
 
+.quran-slide-window {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  width: 63.802%;
+  height: 56.482%;
+  overflow: hidden;
+  background: #090806;
+}
+
+.quran-slide-window-empty {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(225, 191, 119, 0.22), rgba(4, 4, 5, 0.95) 64%);
+}
+
+.quran-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  animation: quran-slide-drift 13s ease-in-out infinite alternate;
+}
+
+.quran-slide-current {
+  opacity: 1;
+}
+
+.quran-slide-next {
+  opacity: 0;
+  transition: opacity 1.5s ease;
+  animation-name: quran-slide-drift-alt;
+}
+
+.quran-slide-next.is-visible {
+  opacity: 1;
+}
+
+.quran-slide-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 72%, rgba(0, 0, 0, 0.42) 100%),
+    radial-gradient(circle at 50% 50%, rgba(255, 224, 148, 0.08), rgba(0, 0, 0, 0.18) 70%);
+  pointer-events: none;
+}
+
 .quran-page-window {
   position: absolute;
   left: var(--page-left, 53.958%);
@@ -624,6 +673,36 @@ button:focus-visible,
   max-width: none;
   object-fit: fill;
   user-select: none;
+}
+
+@keyframes quran-slide-drift {
+  from {
+    transform: scale(1.04) translate3d(-18px, -10px, 0);
+  }
+
+  to {
+    transform: scale(1.1) translate3d(18px, 12px, 0);
+  }
+}
+
+@keyframes quran-slide-drift-alt {
+  from {
+    transform: scale(1.08) translate3d(20px, -8px, 0);
+  }
+
+  to {
+    transform: scale(1.03) translate3d(-18px, 10px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quran-slide {
+    animation: none;
+  }
+
+  .quran-slide-next {
+    transition: none;
+  }
 }
 
 .quran-frame-overlay {

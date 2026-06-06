@@ -2,8 +2,8 @@ import compression from 'compression';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, extname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { createMediaScanner } from './channel/mediaScanner.mjs';
@@ -425,7 +425,25 @@ app.get('/api/config', (_req, res) => {
 });
 
 app.get('/api/slides', (_req, res) => {
-  res.json({ slides: [] });
+  const slideDir = join(ROOT, 'data', 'assets', 'slides');
+  const imageExtensions = new Set(['.webp', '.png', '.jpg', '.jpeg']);
+
+  if (!existsSync(slideDir)) {
+    res.json({ slides: [] });
+    return;
+  }
+
+  const slides = readdirSync(slideDir)
+    .filter((fileName) => imageExtensions.has(extname(fileName).toLowerCase()))
+    .map((fileName) => ({
+      fileName,
+      assetPath: `/assets/slides/${fileName}`,
+      modifiedMs: statSync(join(slideDir, fileName)).mtimeMs
+    }))
+    .sort((a, b) => a.fileName.localeCompare(b.fileName, 'en'))
+    .map((file) => file.assetPath);
+
+  res.json({ slides });
 });
 
 app.get(['/api/manifest', '/manifest.json'], (_req, res) => {

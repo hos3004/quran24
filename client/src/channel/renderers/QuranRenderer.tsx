@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import type { ChannelTheme, QuranScheduleItem } from '../types';
 import type { QuranManifestEntry } from '../scheduler';
 import { useQuranSchedulePlayback } from '../hooks/useQuranSchedulePlayback';
+import { useSlideshow } from '../hooks/useSlideshow';
 import { detectQuranContentBounds } from '../quranContentBounds';
 
 type PageLayout = {
@@ -29,12 +30,14 @@ export function QuranRenderer({
   item,
   manifest,
   offsetSec,
-  themes
+  themes,
+  slides
 }: {
   item: QuranScheduleItem;
   manifest: QuranManifestEntry[];
   offsetSec: number;
   themes: ChannelTheme[];
+  slides: string[];
 }) {
   const playback = useQuranSchedulePlayback(item, manifest, offsetSec);
   const page = playback.pageOffset?.page ?? item.fromPage;
@@ -118,6 +121,7 @@ export function QuranRenderer({
       style={pageStyle}
     >
       <div className="quran-reference-stage">
+        <QuranSlideWindow slides={slides} />
         <div className="quran-page-window" ref={windowRef}>
           <div className="quran-page-flow">
             <QuranFlowPage entry={prevEntry} layout={prevLayout} top={-offsetPrevToCurr} hidden={!prevEntry} />
@@ -152,6 +156,29 @@ export function QuranRenderer({
       </span>
       {playback.audioError && <span className="sr-only">{playback.audioError}</span>}
     </section>
+  );
+}
+
+function QuranSlideWindow({ slides }: { slides: string[] }) {
+  const { currentSrc, nextSrc, transitioning } = useSlideshow(slides);
+
+  if (slides.length === 0 || !currentSrc) {
+    return <div className="quran-slide-window quran-slide-window-empty" aria-hidden="true" />;
+  }
+
+  return (
+    <div className="quran-slide-window" aria-hidden="true">
+      <img className="quran-slide quran-slide-current" src={currentSrc} alt="" draggable={false} />
+      {slides.length > 1 && (
+        <img
+          className={`quran-slide quran-slide-next${transitioning ? ' is-visible' : ''}`}
+          src={nextSrc}
+          alt=""
+          draggable={false}
+        />
+      )}
+      <div className="quran-slide-shade" />
+    </div>
   );
 }
 
