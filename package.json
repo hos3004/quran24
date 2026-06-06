@@ -1,0 +1,30 @@
+{
+  "name": "quran24",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Android TV virtual linear Quran channel platform",
+  "type": "module",
+  "workspaces": [
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c green,cyan \"npm run server\" \"npm --workspace client run dev\"",
+    "server": "node server/index.mjs",
+    "build": "npm --workspace client run build",
+    "test": "node --test",
+    "lint": "node --check server/index.mjs && npm --workspace client run lint"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
+

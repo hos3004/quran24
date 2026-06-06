@@ -54,9 +54,22 @@ Target flow:
 
 Target repository:
 
-- No application entrypoints exist yet.
-- No root `package.json`, `server`, `client`, or `android-tv` project exists yet.
-- Phase 0 creates documentation only.
+- Root `package.json` exists with workspace scripts:
+  - `npm run dev`
+  - `npm run server`
+  - `npm run build`
+  - `npm run test`
+  - `npm run lint`
+- Express server entrypoint: `server/index.mjs`
+- Vite client entrypoint: `client/src/main.tsx`
+- Production client output: `client/dist` after `npm run build`
+- Current web routes are served by the client fallback.
+- Current compatibility API placeholders:
+  - `GET /api/config`
+  - `GET /api/slides`
+  - `GET /api/manifest`
+  - `GET /manifest.json`
+- Android TV project does not exist yet; it starts in a later phase.
 
 Reference repository:
 

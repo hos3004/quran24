@@ -48,16 +48,16 @@ Build Quran24 as a new platform in `quran24` and selectively adapt reference ide
 
 ## Phase 1 Guidance
 
-The first runnable foundation should include:
+Phase 1 foundation now includes:
 
 - Root package scripts for `dev`, `server`, `build`, `test`, and `lint`.
 - Express server on port 3737.
 - Vite React client.
-- Compatibility routes for `/api/config`, `/api/manifest`, and `/api/slides` even if backed by placeholders initially.
-- A placeholder app route and an eventual `/channel` route.
+- Compatibility routes for `/api/config`, `/api/manifest`, `/manifest.json`, and `/api/slides`, backed by placeholders.
+- A placeholder app shell served from the built client.
 - `.env.example`, `.gitignore`, and README.
 
-Do not import the full old app wholesale. Start with a clean shape and pull in small proven pieces as each phase needs them.
+The old app was not imported wholesale. Later phases should pull in small proven pieces as each phase needs them.
 
 ## Android TV Guidance
 

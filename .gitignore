@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Build output
+dist/
+client/dist/
+dist-ssr/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local caches
+.vite/
+.vitest/
+.eslintcache
+*.tsbuildinfo
+.pytest_cache/
+
+# Heavy media stays local unless explicitly packaged later
+data/reciters/*
+!data/reciters/.gitkeep
+data/assets/*
+!data/assets/.gitkeep

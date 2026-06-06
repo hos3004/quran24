@@ -85,6 +85,85 @@ Phase 0 interpretation:
 
 ## Phase 1 Readiness
 
-Phase 1 can begin after Phase 0 verification passes, Phase 0 docs are committed, and the branch is pushed.
+Phase 1 started after Phase 0 verification passed, Phase 0 docs were committed, and the branch was pushed.
 
 Phase 1 should create the runnable web/server foundation without copying the old project wholesale.
+
+## Phase 1 Summary
+
+Status: completed
+
+Goal:
+
+- Create a clean runnable foundation in `quran24`.
+- Add root package scripts.
+- Add Express server.
+- Add React + TypeScript + Vite client.
+- Add compatibility placeholders for reference-era APIs.
+- Add `.env.example`, `.gitignore`, README, and a lightweight test.
+
+What changed:
+
+- Added root npm workspace package.
+- Added Express server at `server/index.mjs`.
+- Added Vite React client under `client/`.
+- Added minimal app shell served by the Express server after build.
+- Added placeholder compatibility endpoints:
+  - `GET /api/config`
+  - `GET /api/slides`
+  - `GET /api/manifest`
+  - `GET /manifest.json`
+- Added data placeholder directories:
+  - `data/assets/`
+  - `data/reciters/`
+  - `data/channel/`
+- Added root `README.md`.
+- Added `test/foundation.test.mjs`.
+
+Reference used from `livestreamquran-reference`:
+
+- Express plus Vite split.
+- Port convention: server on 3737 and client on 5173.
+- Compatibility API names.
+- Asset path conventions for `/assets`, manifest, slides, reciters, and Quran pages.
+
+What was intentionally not reused:
+
+- Full old React app.
+- OBS player routes.
+- Admin dashboard implementation.
+- Old write APIs.
+- Quran renderer internals, which begin in the scheduled runtime phases.
+- Any tracked media from the reference repository.
+
+## Phase 1 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git pull --ff-only
+npm install
+npm run build
+npm run test
+npm run lint
+node server/index.mjs
+```
+
+Observed results:
+
+- `git pull --ff-only`: already up to date.
+- `npm install`: installed 253 packages, audited 255 packages, found 0 vulnerabilities.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 2 tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Server smoke test:
+  - `http://localhost:3737/` returned 200.
+  - `http://localhost:3737/api/config` returned 200.
+  - `http://localhost:3737/api/slides` returned 200.
+  - `http://localhost:3737/api/manifest` returned 200.
+
+## Phase 1 Git Update
+
+Pending commit and push.
