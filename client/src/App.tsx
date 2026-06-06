@@ -34,6 +34,8 @@ type ChannelStatusResponse = {
     androidTvShell?: boolean;
     androidBridgeReceiver?: boolean;
     androidWatchdog?: boolean;
+    nativeMedia3Playback?: boolean;
+    nativeHlsPlayback?: boolean;
     heartbeat: string;
   };
   compatibility: {

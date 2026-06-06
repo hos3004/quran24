@@ -1039,3 +1039,85 @@ Notes:
 - Primary Phase 12 commit: `55d8e61`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 12 push without rewriting published history.
+
+## Phase 13 Summary
+
+Status: completed
+
+Goal:
+
+- Add native Media3/ExoPlayer playback for scheduled video items.
+- Add native Media3/ExoPlayer HLS playback for live stream items.
+- Keep Quran rendering as local page images plus audio.
+- Return playback lifecycle results to the web runtime.
+
+What changed:
+
+- Added Media3 `1.10.1` dependencies:
+  - `androidx.media3:media3-exoplayer`
+  - `androidx.media3:media3-exoplayer-hls`
+  - `androidx.media3:media3-ui`
+- Added fullscreen native `PlayerView` overlay in `MainActivity`.
+- `PLAY_VIDEO` bridge events now start native Media3 playback.
+- `PLAY_LIVE_STREAM` bridge events now start native Media3 HLS playback.
+- HLS sources are marked with `MimeTypes.APPLICATION_M3U8`.
+- Video item offsets seek the native player to the scheduled offset.
+- Back stops native playback and returns to WebView.
+- Player errors send `VIDEO_FAILED` and `RESUME_CHANNEL` to the web runtime.
+- Player end sends `VIDEO_FINISHED` and returns to the web runtime.
+- Updated `/api/channel/status` to report Phase 13, `nativeMedia3Playback: true`, and `nativeHlsPlayback: true`.
+- Updated admin diagnostics and docs.
+
+What was intentionally not added:
+
+- No whole-Quran HLS conversion.
+- No offline cache yet.
+- No production Taraweeh HLS source; the current schedule still uses a placeholder URL.
+
+## Phase 13 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+cd android-tv
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.17.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+cd ..
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 13 start.
+- `git pull --ff-only`: already up to date.
+- Media3 dependency version checked against official Android Developers Media3 release notes: stable `1.10.1`.
+- Android build passed.
+- Android lint passed after avoiding an unnecessary unstable `PlayerView` API.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 16 backend Node tests and 20 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- `GET /api/channel/status` returned `phase: 13`, `runtime.nativeMedia3Playback: true`, and `runtime.nativeHlsPlayback: true`.
+- Android Studio TV emulator smoke:
+  - device: `emulator-5554`
+  - `adb reverse tcp:3737 tcp:3837` mapped the app's local channel URL to the Quran24 server on port 3837.
+  - `/channel` rendered fullscreen in WebView.
+  - Web runtime detected the Android bridge and sent the live stream item to native playback.
+  - Media3 attempted the placeholder HLS URL.
+  - Media3 failed safely with a source/certificate error for `https://example.com/live/taraweeh.m3u8`.
+  - Android released the native player and returned to WebView.
+  - WebView heartbeat continued after native playback failure.
+  - final smoke log contained no `FATAL EXCEPTION`.
+
+Notes:
+
+- The placeholder `example.com` HLS URL is not expected to play. Phase 13 verifies native player ownership and failure recovery. Real stream verification requires a valid HLS source.
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837` plus `adb reverse`.

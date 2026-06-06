@@ -33,12 +33,14 @@ test('server exposes Phase 10 media and reciter endpoints', () => {
   assert.match(serverSource, /\/api\/media\/scan/);
 });
 
-test('Android TV Phase 12 shell and watchdog are present and reported', () => {
+test('Android TV Phase 13 native media playback is present and reported', () => {
   const serverSource = readFileSync(new URL('../server/index.mjs', import.meta.url), 'utf8');
-  assert.match(serverSource, /phase:\s*12/);
+  assert.match(serverSource, /phase:\s*13/);
   assert.match(serverSource, /androidTvShell:\s*true/);
   assert.match(serverSource, /androidBridgeReceiver:\s*true/);
   assert.match(serverSource, /androidWatchdog:\s*true/);
+  assert.match(serverSource, /nativeMedia3Playback:\s*true/);
+  assert.match(serverSource, /nativeHlsPlayback:\s*true/);
   assert.equal(existsSync(new URL('../android-tv/app/src/main/AndroidManifest.xml', import.meta.url)), true);
   assert.equal(
     existsSync(new URL('../android-tv/app/src/main/kotlin/com/quran24/tv/MainActivity.kt', import.meta.url)),

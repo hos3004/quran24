@@ -25,6 +25,11 @@ android {
 }
 
 dependencies {
+    val media3Version = "1.10.1"
+
     implementation("androidx.webkit:webkit:1.16.0")
     implementation("androidx.window.extensions.core:core:1.0.0")
+    implementation("androidx.media3:media3-exoplayer:$media3Version")
+    implementation("androidx.media3:media3-exoplayer-hls:$media3Version")
+    implementation("androidx.media3:media3-ui:$media3Version")
 }

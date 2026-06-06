@@ -35,12 +35,22 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import org.json.JSONObject
 
 class MainActivity : Activity() {
     private lateinit var root: FrameLayout
     private var webView: WebView? = null
+    private var nativePlayer: ExoPlayer? = null
+    private var nativePlayerView: PlayerView? = null
+    private var nativePlaybackItemId: String? = null
+    private var nativePlaybackSource: String? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var pageLoadedAtElapsedMs = 0L
     private var lastHeartbeatElapsedMs = 0L
@@ -89,6 +99,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         mainHandler.removeCallbacks(watchdogRunnable)
         unregisterBackHandler()
+        releaseNativePlayer(sendResumeCommand = false)
         webView?.destroy()
         webView = null
         super.onDestroy()
@@ -102,10 +113,16 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         enterImmersiveMode()
+        nativePlayer?.play()
+    }
+
+    override fun onPause() {
+        nativePlayer?.pause()
+        super.onPause()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (isSettingsShortcut(event)) {
+        if (nativePlayerView == null && isSettingsShortcut(event)) {
             openSettings()
             return true
         }
@@ -120,6 +137,11 @@ class MainActivity : Activity() {
     }
 
     private fun handleBack() {
+        if (nativePlayerView != null) {
+            releaseNativePlayer(sendResumeCommand = true)
+            return
+        }
+
         val currentWebView = webView
         if (currentWebView?.canGoBack() == true) {
             currentWebView.goBack()
@@ -134,6 +156,7 @@ class MainActivity : Activity() {
         if (resetWatchdogAttempts) {
             consecutiveWatchdogReloads = 0
         }
+        releaseNativePlayer(sendResumeCommand = false)
         markChannelLoading()
         root.removeAllViews()
 
@@ -172,6 +195,7 @@ class MainActivity : Activity() {
     }
 
     private fun showRecovery(message: String) {
+        releaseNativePlayer(sendResumeCommand = false)
         webView?.destroy()
         webView = null
         pageLoadedAtElapsedMs = 0L
@@ -291,8 +315,7 @@ class MainActivity : Activity() {
             }
             "PLAY_VIDEO",
             "PLAY_LIVE_STREAM" -> {
-                activeBridgeItemId = event.optString("itemId").takeIf { it.isNotBlank() }
-                Log.i(TAG, "Bridge event $type item=$activeBridgeItemId source=${event.optString("source")}")
+                playNativeMedia(event, isLiveStream = type == "PLAY_LIVE_STREAM")
             }
             "REQUEST_RELOAD" -> {
                 Log.w(TAG, "Web runtime requested reload: ${event.optString("reason")}")
@@ -332,6 +355,7 @@ class MainActivity : Activity() {
 
     private fun reloadChannel(reason: String) {
         val currentWebView = webView
+        releaseNativePlayer(sendResumeCommand = false)
         markChannelLoading()
         if (currentWebView == null) {
             Log.w(TAG, "Reload requested without WebView: $reason")
@@ -341,6 +365,92 @@ class MainActivity : Activity() {
 
         Log.w(TAG, "Reloading channel WebView: $reason")
         currentWebView.reload()
+    }
+
+    private fun playNativeMedia(event: JSONObject, isLiveStream: Boolean) {
+        val itemId = event.optString("itemId").takeIf { it.isNotBlank() }
+        val source = event.optString("source").takeIf { it.isNotBlank() }
+        val title = event.optString("title").takeIf { it.isNotBlank() } ?: itemId ?: getString(R.string.app_name)
+
+        if (itemId == null || source == null) {
+            Log.w(TAG, "Ignoring native media event with missing itemId or source")
+            return
+        }
+
+        if (nativePlaybackItemId == itemId && nativePlaybackSource == source && nativePlayer != null) {
+            Log.d(TAG, "Native player already active for item=$itemId")
+            return
+        }
+
+        releaseNativePlayer(sendResumeCommand = false)
+        activeBridgeItemId = itemId
+        nativePlaybackItemId = itemId
+        nativePlaybackSource = source
+
+        val playerView = PlayerView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.BLACK)
+            useController = true
+            keepScreenOn = true
+            isFocusable = true
+        }
+
+        val player = ExoPlayer.Builder(this).build().apply {
+            addListener(NativePlayerListener(itemId))
+            val mediaItem = MediaItem.Builder()
+                .setMediaId(itemId)
+                .setUri(source)
+                .setMediaMetadata(
+                    androidx.media3.common.MediaMetadata.Builder()
+                        .setTitle(title)
+                        .build()
+                )
+                .apply {
+                    if (isLiveStream || source.contains(".m3u8", ignoreCase = true)) {
+                        setMimeType(MimeTypes.APPLICATION_M3U8)
+                    }
+                }
+                .build()
+
+            setMediaItem(mediaItem)
+            val offsetMs = (event.optDouble("offsetSec", 0.0).takeIf { it > 0.0 } ?: 0.0) * 1000
+            if (offsetMs > 0) {
+                seekTo(offsetMs.toLong())
+            }
+            prepare()
+            playWhenReady = true
+        }
+
+        nativePlayer = player
+        nativePlayerView = playerView
+        playerView.player = player
+        root.addView(playerView)
+        playerView.requestFocus()
+        Log.i(TAG, "Native Media3 playback started item=$itemId live=$isLiveStream source=$source")
+    }
+
+    private fun releaseNativePlayer(sendResumeCommand: Boolean) {
+        val releasedItemId = nativePlaybackItemId
+        nativePlayerView?.player = null
+        nativePlayer?.release()
+        nativePlayer = null
+        nativePlaybackItemId = null
+        nativePlaybackSource = null
+        nativePlayerView?.let { view ->
+            if (view.parent === root) {
+                root.removeView(view)
+            }
+        }
+        nativePlayerView = null
+        webView?.requestFocus()
+
+        if (sendResumeCommand) {
+            sendWebRuntimeCommand(JSONObject().put("type", "RESUME_CHANNEL"))
+            Log.i(TAG, "Native playback released item=$releasedItemId")
+        }
     }
 
     private fun sendWebRuntimeCommand(command: JSONObject) {
@@ -446,6 +556,28 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun postMessage(message: String) {
             mainHandler.post { handleBridgeMessage(message) }
+        }
+    }
+
+    private inner class NativePlayerListener(private val itemId: String) : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_ENDED) {
+                sendWebRuntimeCommand(JSONObject()
+                    .put("type", "VIDEO_FINISHED")
+                    .put("itemId", itemId)
+                )
+                releaseNativePlayer(sendResumeCommand = true)
+            }
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            Log.e(TAG, "Native Media3 playback failed item=$itemId: ${error.message}", error)
+            sendWebRuntimeCommand(JSONObject()
+                .put("type", "VIDEO_FAILED")
+                .put("itemId", itemId)
+                .put("message", error.message ?: "Native playback failed")
+            )
+            releaseNativePlayer(sendResumeCommand = true)
         }
     }
 

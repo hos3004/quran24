@@ -32,7 +32,7 @@ Target Quran24 stack:
 - Web runtime: React, TypeScript, Vite.
 - Backend: Express with channel APIs, validation, telemetry, and schedule versioning.
 - Channel model: schedule plus local rendering plus synchronized server clock.
-- Android TV: Kotlin, fullscreen WebView shell for Quran visual runtime, AndroidX WebKit, JavaScript bridge receiver, heartbeat watchdog, recovery UI, and future Media3/ExoPlayer MP4/HLS playback.
+- Android TV: Kotlin, fullscreen WebView shell for Quran visual runtime, AndroidX WebKit, JavaScript bridge receiver, heartbeat watchdog, recovery UI, and Media3/ExoPlayer MP4/HLS playback.
 - Persistence: JSON files under `data/channel` for Phase 1-10, with future migration path if required.
 
 ## SYSTEM_FLOW
@@ -48,8 +48,10 @@ Target flow:
 7. Video and live stream items emit bridge events for native Android playback.
 8. Web runtime emits heartbeat every 5 seconds.
 9. Android receives heartbeat and media bridge events through `Quran24Android.postMessage(...)`.
-10. Android watchdog reloads WebView if heartbeat stalls.
-11. Cached schedule and fallback local assets prevent black screens during network failure.
+10. Android plays video and HLS items through a fullscreen native Media3 `PlayerView`.
+11. Android sends playback completion/failure commands back to the web runtime.
+12. Android watchdog reloads WebView if heartbeat stalls.
+13. Cached schedule and fallback local assets prevent black screens during network failure.
 
 ## CURRENT_ENTRYPOINTS
 
@@ -109,7 +111,7 @@ Target repository:
   - Hidden settings screen: `android-tv/app/src/main/kotlin/com/quran24/tv/HiddenSettingsActivity.kt`
   - URL preferences: `android-tv/app/src/main/kotlin/com/quran24/tv/ChannelPreferences.kt`
   - Local cleartext config: `android-tv/app/src/main/res/xml/network_security_config.xml`
-  - Bridge/watchdog runtime lives in `MainActivity` until Media3 playback is introduced.
+  - Bridge/watchdog/Media3 runtime currently lives in `MainActivity`.
 - In the current local environment, port 3737 is already occupied by a pre-existing old Quran Broadcast server, so Quran24 smoke verification used `PORT=3837`.
 
 Reference repository:
@@ -297,7 +299,7 @@ Architecture priorities:
 - Remote `quran24` has no `main` branch yet; Phase 0 starts from an unborn repository.
 - Reference audio assets are gitignored and absent locally; early phases must not assume committed MP3 files.
 - Android dependency versions must be checked against official Android sources before Android phases; Phase 11 uses Android Gradle Plugin 9.2.0, compile/target SDK 36, AndroidX WebKit 1.16.0, and Gradle 9.4.1.
-- WebView audio can be fragile for 24/7 use; the Phase 8 bridge defines ownership boundaries for native video/HLS, and Phase 12 now lets Android observe heartbeat health before native Media3 playback is added.
+- WebView audio can be fragile for 24/7 use; native video/HLS ownership moved to Android in Phase 13, while Quran audio remains supervised through the page renderer path until later resilience phases.
 - Menu keys can be reserved by TV launchers; Phase 11 also supports long press OK/DPAD_CENTER for hidden settings.
 - Schedule validation must block path traversal and unsafe local paths from the first write API phase.
 - Time sync must use `performance.now()` anchoring to avoid drift and wall-clock jumps.

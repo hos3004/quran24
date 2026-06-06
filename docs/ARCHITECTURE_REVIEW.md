@@ -272,6 +272,25 @@ The final Android Studio emulator smoke confirmed:
 
 Phase 12 still intentionally leaves actual MP4/HLS rendering for Phase 13. This keeps the receiver/watchdog layer stable before Media3 introduces player lifecycle complexity.
 
+## Phase 13 Guidance
+
+Phase 13 now adds native Media3 playback for bridge-driven video and live stream items:
+
+- Android dependencies use official Media3 `1.10.1` artifacts:
+  - `androidx.media3:media3-exoplayer`
+  - `androidx.media3:media3-exoplayer-hls`
+  - `androidx.media3:media3-ui`
+- `PLAY_VIDEO` and `PLAY_LIVE_STREAM` events create a fullscreen native `PlayerView` overlay above WebView.
+- `ExoPlayer` receives `MediaItem` instances built from schedule item source URLs.
+- HLS items and `.m3u8` sources are marked with `MimeTypes.APPLICATION_M3U8`.
+- Video item offsets are mapped into initial player seek positions.
+- Back closes native playback and returns focus to WebView.
+- Player errors send `VIDEO_FAILED` then `RESUME_CHANNEL` back to the web runtime.
+- Player end sends `VIDEO_FINISHED` then returns control to the web runtime.
+- `/api/channel/status` now reports Phase 13, `runtime.nativeMedia3Playback: true`, and `runtime.nativeHlsPlayback: true`.
+
+The Phase 13 emulator smoke used the current Taraweeh placeholder HLS URL. Media3 correctly attempted native playback, failed because the placeholder `example.com` certificate path was not valid in the emulator, released the player, returned to WebView, and kept heartbeats flowing. This is the expected result for a placeholder URL; real HLS validation should use a valid test stream or future Taraweeh source.
+
 ## Android TV Guidance
 
 Android phases should use:

@@ -17,6 +17,8 @@ Current behavior:
 - Long press OK/DPAD_CENTER also opens settings for TV launchers that reserve Menu for system Home behavior.
 - JavaScript bridge objects `Quran24Android` and `AndroidBridge` receive web runtime events.
 - Heartbeat watchdog reloads WebView after a stalled heartbeat window and falls back to native recovery after repeated stalls.
+- Media3/ExoPlayer plays video and HLS bridge items in a native fullscreen `PlayerView` overlay.
+- Native playback sends `VIDEO_FINISHED`, `VIDEO_FAILED`, and `RESUME_CHANNEL` commands back to the web runtime.
 
 ## Build
 
@@ -69,6 +71,7 @@ Expected result:
 - Long press OK opens `Quran24 Settings`.
 - The first settings button has a visible focus state.
 - Logcat shows `Quran24TV` heartbeat messages when `/channel` is healthy.
+- Media3 logs appear when video or HLS bridge events are active.
 
 Useful logcat filter:
 
@@ -83,5 +86,5 @@ During development, security software can flag actions such as Gradle wrapper ex
 ## Next Android Phases
 
 - Phase 12: bridge receiver and WebView heartbeat watchdog. Completed.
-- Phase 13: Media3/ExoPlayer MP4 and HLS playback for video/live stream items.
+- Phase 13: Media3/ExoPlayer MP4 and HLS playback for video/live stream items. Completed with Media3 `1.10.1`.
 - Phase 14: offline cache and local-first recovery.
