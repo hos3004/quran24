@@ -413,6 +413,44 @@ button:focus-visible,
   color: #ff9d8f;
 }
 
+.reciter-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reciter-row {
+  display: grid;
+  grid-template-columns: 110px minmax(120px, 0.8fr) minmax(160px, 1.2fr) minmax(140px, 0.8fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid rgba(245, 240, 230, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.media-missing-list {
+  display: grid;
+  gap: 8px;
+}
+
+.media-missing-list p {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 157, 143, 0.2);
+  border-radius: 8px;
+  background: rgba(180, 48, 48, 0.12);
+  font-size: 14px;
+}
+
+.media-missing-list span,
+.media-missing-list strong {
+  overflow-wrap: anywhere;
+}
+
 .diagnostics-table.compact div {
   min-height: 48px;
   padding: 10px 12px;
@@ -596,7 +634,9 @@ button:focus-visible,
   }
 
   .schedule-editor,
-  .form-grid {
+  .form-grid,
+  .reciter-row,
+  .media-missing-list p {
     grid-template-columns: 1fr;
   }
 

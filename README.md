@@ -102,12 +102,18 @@ http://localhost:3737
 - `GET /api/slides`
 - `GET /api/manifest`
 - `GET /manifest.json`
+- `GET /api/reciters`
+- `PATCH /api/reciters`
+- `GET /api/media/library`
+- `POST /api/media/scan`
 
 These endpoints are minimal early-phase implementations. They preserve useful paths from the reference app while the channel-first API is built in later phases.
 
 ## Admin Schedule Editor
 
 Phase 9 adds a schedule editor under `/admin?section=schedule`. It can load the current schedule, edit daily/weekly item fields, add Quran/break/announcement/video/live-stream items, call the backend validator, save drafts, and publish with the admin token.
+
+Phase 10 connects `/admin?section=readers` and `/admin?section=media` to the reciter and media APIs. Reciter metadata is stored in `data/channel/reciters.json`; heavy audio remains local under ignored `data/reciters/` folders. The media scanner writes `data/channel/media-index.json` and reports missing manifest/schedule references.
 
 ## Seed Quran Assets
 

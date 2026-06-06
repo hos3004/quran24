@@ -52,6 +52,42 @@ type SaveResponse = ValidationResponse & {
   warnings?: string[];
 };
 
+type Reciter = {
+  id: string;
+  name: string;
+  folderName: string;
+  audioDir: string;
+};
+
+type RecitersResponse = {
+  ok: boolean;
+  audioRootDir: string;
+  activeReciterId: string;
+  reciters: Reciter[];
+  validation?: ScheduleValidationResult;
+};
+
+type MediaIndex = {
+  ok: boolean;
+  generatedAt: string;
+  summary: {
+    quranPageImages: number;
+    quranPageMetadata: number;
+    reciterAudio: number;
+    breakSlides: number;
+    audioMessages: number;
+    videos: number;
+    missingFiles: number;
+  };
+  categories: {
+    reciterAudio: { reciterId: string; fileCount: number; totalBytes: number; samplePath: string }[];
+    breakSlides: { path: string; bytes: number }[];
+    audioMessages: { path: string; bytes: number }[];
+    videos: { path: string; bytes: number }[];
+  };
+  missingFiles: { source: string; ownerId: string; path: string; reason: string }[];
+};
+
 const adminSections = ['general', 'readers', 'schedule', 'media', 'diagnostics'] as const;
 type AdminSection = typeof adminSections[number];
 
@@ -547,7 +583,7 @@ function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostic
       <div className="status-grid">
         <Metric label="Load State" value={loadState} />
         <Metric label="Service" value={diagnostics.health?.service ?? diagnostics.config?.service ?? 'quran24-channel'} />
-        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 9)} />
+        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 10)} />
         <Metric label="Schedule" value={String(diagnostics.channelStatus?.schedule.activeVersion ?? 'none')} />
       </div>
     </section>
@@ -555,41 +591,271 @@ function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostic
 }
 
 function ReadersPanel() {
+  const [data, setData] = useState<RecitersResponse | null>(null);
+  const [adminToken, setAdminToken] = useState('');
+  const [message, setMessage] = useState('Loading reciters');
+  const [busy, setBusy] = useState(false);
+
+  const loadReciters = useCallback(() => {
+    setBusy(true);
+    fetch('/api/reciters', { cache: 'no-store' })
+      .then((response) => response.json() as Promise<RecitersResponse>)
+      .then((payload) => {
+        setData(payload);
+        setMessage('Reciters loaded');
+      })
+      .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
+      .finally(() => setBusy(false));
+  }, []);
+
+  useEffect(() => {
+    loadReciters();
+  }, [loadReciters]);
+
+  function updateReciter(id: string, patch: Partial<Reciter>) {
+    setData((current) => current ? {
+      ...current,
+      activeReciterId: patch.id && current.activeReciterId === id ? patch.id : current.activeReciterId,
+      reciters: current.reciters.map((reciter) => reciter.id === id ? {
+        ...reciter,
+        ...patch,
+        audioDir: `data/reciters/${patch.folderName ?? reciter.folderName}`
+      } : reciter)
+    } : current);
+  }
+
+  function addReciter() {
+    setData((current) => {
+      if (!current) return current;
+      const id = `reciter-${current.reciters.length + 1}`;
+      return {
+        ...current,
+        activeReciterId: current.activeReciterId || id,
+        reciters: [
+          ...current.reciters,
+          {
+            id,
+            name: `Reciter ${current.reciters.length + 1}`,
+            folderName: id,
+            audioDir: `data/reciters/${id}`
+          }
+        ]
+      };
+    });
+  }
+
+  function removeReciter(id: string) {
+    setData((current) => {
+      if (!current) return current;
+      const reciters = current.reciters.filter((reciter) => reciter.id !== id);
+      return {
+        ...current,
+        activeReciterId: current.activeReciterId === id ? reciters[0]?.id ?? '' : current.activeReciterId,
+        reciters
+      };
+    });
+  }
+
+  async function saveReciters() {
+    if (!data) return;
+    if (!adminToken.trim()) {
+      setMessage('Admin token required');
+      return;
+    }
+
+    setBusy(true);
+    setMessage('Saving reciters');
+    try {
+      const response = await fetch('/api/reciters', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': adminToken.trim()
+        },
+        body: JSON.stringify({
+          audioRootDir: data.audioRootDir,
+          activeReciterId: data.activeReciterId,
+          reciters: data.reciters
+        })
+      });
+      const payload = await response.json() as RecitersResponse & { validation?: ScheduleValidationResult; error?: string };
+      if (!response.ok || !payload.ok) {
+        setMessage(payload.validation?.errors.join(' | ') || payload.error || 'Reciter save failed');
+        return;
+      }
+      setData(payload);
+      setMessage('Reciters saved');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!data) {
+    return (
+      <section className="admin-panel">
+        <h2>Readers</h2>
+        <p>{message}</p>
+      </section>
+    );
+  }
+
   return (
     <section className="admin-panel">
-      <h2>Readers</h2>
-      <div className="diagnostics-table compact">
-        <div>
-          <span>Default</span>
-          <strong>ajmy</strong>
-        </div>
-        <div>
-          <span>Status</span>
-          <strong>Phase 10</strong>
-        </div>
+      <div className="admin-panel-title">
+        <h2>Readers</h2>
+        <strong>{data.reciters.length} configured</strong>
       </div>
+      <div className="form-grid">
+        <label>
+          Audio Root
+          <input value={data.audioRootDir} readOnly />
+        </label>
+        <label>
+          Admin Token
+          <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
+        </label>
+      </div>
+      <div className="reciter-list">
+        {data.reciters.map((reciter) => (
+          <div key={reciter.id} className="reciter-row">
+            <label className="checkbox-row">
+              <input
+                type="radio"
+                name="active-reciter"
+                checked={data.activeReciterId === reciter.id}
+                onChange={() => setData({ ...data, activeReciterId: reciter.id })}
+              />
+              Active
+            </label>
+            <label>
+              ID
+              <input value={reciter.id} onChange={(event) => updateReciter(reciter.id, { id: event.target.value })} />
+            </label>
+            <label>
+              Name
+              <input value={reciter.name} onChange={(event) => updateReciter(reciter.id, { name: event.target.value })} />
+            </label>
+            <label>
+              Folder
+              <input value={reciter.folderName} onChange={(event) => updateReciter(reciter.id, { folderName: event.target.value })} />
+            </label>
+            <button type="button" className="danger" onClick={() => removeReciter(reciter.id)}>Remove</button>
+          </div>
+        ))}
+      </div>
+      <div className="admin-actions">
+        <button type="button" onClick={addReciter} disabled={busy}>Add Reader</button>
+        <button type="button" onClick={saveReciters} disabled={busy}>Save Readers</button>
+        <button type="button" onClick={loadReciters} disabled={busy}>Reload</button>
+      </div>
+      <p className="admin-message">{message}</p>
     </section>
   );
 }
 
 function MediaPanel() {
+  const [media, setMedia] = useState<MediaIndex | null>(null);
+  const [adminToken, setAdminToken] = useState('');
+  const [message, setMessage] = useState('Loading media library');
+  const [busy, setBusy] = useState(false);
+
+  const loadMedia = useCallback(() => {
+    setBusy(true);
+    fetch('/api/media/library', { cache: 'no-store' })
+      .then((response) => response.json() as Promise<MediaIndex>)
+      .then((payload) => {
+        setMedia(payload);
+        setMessage('Media library loaded');
+      })
+      .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
+      .finally(() => setBusy(false));
+  }, []);
+
+  useEffect(() => {
+    loadMedia();
+  }, [loadMedia]);
+
+  async function scanMedia() {
+    if (!adminToken.trim()) {
+      setMessage('Admin token required');
+      return;
+    }
+
+    setBusy(true);
+    setMessage('Scanning media');
+    try {
+      const response = await fetch('/api/media/scan', {
+        method: 'POST',
+        headers: { 'x-admin-token': adminToken.trim() }
+      });
+      const payload = await response.json() as MediaIndex & { error?: string };
+      if (!response.ok || !payload.ok) {
+        setMessage(payload.error || 'Media scan failed');
+        return;
+      }
+      setMedia(payload);
+      setMessage('Media scan complete');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="admin-panel">
-      <h2>Media Library</h2>
-      <div className="diagnostics-table compact">
-        <div>
-          <span>Quran Pages</span>
-          <strong>20 seeded</strong>
-        </div>
-        <div>
-          <span>Slides</span>
-          <strong>2 seeded</strong>
-        </div>
-        <div>
-          <span>Scanner</span>
-          <strong>Phase 10</strong>
-        </div>
+      <div className="admin-panel-title">
+        <h2>Media Library</h2>
+        <strong>{media?.generatedAt ? new Date(media.generatedAt).toLocaleString() : 'pending'}</strong>
       </div>
+      <div className="form-grid">
+        <label>
+          Admin Token
+          <input type="password" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} />
+        </label>
+      </div>
+      <div className="admin-actions">
+        <button type="button" onClick={scanMedia} disabled={busy}>Scan Media</button>
+        <button type="button" onClick={loadMedia} disabled={busy}>Reload</button>
+      </div>
+      {media ? (
+        <>
+          <div className="status-grid">
+            <Metric label="Quran Images" value={String(media.summary.quranPageImages)} />
+            <Metric label="Reciter Audio" value={String(media.summary.reciterAudio)} />
+            <Metric label="Slides" value={String(media.summary.breakSlides)} />
+            <Metric label="Missing" value={String(media.summary.missingFiles)} />
+          </div>
+          <div className="diagnostics-table compact">
+            {media.categories.reciterAudio.map((reciter) => (
+              <div key={reciter.reciterId}>
+                <span>{reciter.reciterId}</span>
+                <strong>{reciter.fileCount} audio files</strong>
+              </div>
+            ))}
+            {media.categories.reciterAudio.length === 0 && (
+              <div>
+                <span>Reciter Audio</span>
+                <strong>0 audio files</strong>
+              </div>
+            )}
+          </div>
+          <div className="media-missing-list">
+            {media.missingFiles.slice(0, 12).map((missing) => (
+              <p key={`${missing.source}-${missing.ownerId}-${missing.path}`}>
+                <strong>{missing.ownerId}</strong>
+                <span>{missing.path}</span>
+              </p>
+            ))}
+            {media.missingFiles.length > 12 && <p>{media.missingFiles.length - 12} more missing files</p>}
+          </div>
+        </>
+      ) : (
+        <p>{message}</p>
+      )}
+      <p className="admin-message">{message}</p>
     </section>
   );
 }

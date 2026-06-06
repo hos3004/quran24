@@ -200,6 +200,21 @@ Phase 9 now adds the first real admin dashboard shape:
 
 Readers and Media Library sections are intentionally light until Phase 10 adds reciter and media scan APIs.
 
+## Phase 10 Guidance
+
+Phase 10 now adds safe media and reciter management:
+
+- `server/channel/mediaScanner.mjs` scans only known project data roots.
+- `server/channel/reciterStore.mjs` stores reciter metadata in `data/channel/reciters.json`.
+- `GET /api/reciters` returns configured reciters.
+- `PATCH /api/reciters` is admin-token protected and rejects unsafe IDs, folders, audio roots, and audio paths.
+- `GET /api/media/library` returns the latest media index.
+- `POST /api/media/scan` is admin-token protected and writes `data/channel/media-index.json`.
+- `/assets/reciters/*` serves local reciter audio from `data/reciters` when audio packages are present.
+- The admin Readers and Media Library sections are now API-backed.
+
+The current scan correctly reports missing reciter audio and break audio instead of masking those gaps. This is desirable until Phase 14 adds local-first/offline packaging.
+
 ## Android TV Guidance
 
 Android phases should use:

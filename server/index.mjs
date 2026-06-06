@@ -6,6 +6,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
+import { createMediaScanner } from './channel/mediaScanner.mjs';
+import { createReciterStore } from './channel/reciterStore.mjs';
 import { createScheduleStore } from './channel/scheduleStore.mjs';
 
 dotenv.config();
@@ -46,6 +48,8 @@ function log(level, event, fields = {}) {
 
 const packageJson = readJsonIfExists(join(ROOT, 'package.json'), { version: '0.0.0' });
 const scheduleStore = createScheduleStore({ rootDir: ROOT, logger: log });
+const reciterStore = createReciterStore({ rootDir: ROOT, logger: log });
+const mediaScanner = createMediaScanner({ rootDir: ROOT, logger: log });
 
 const defaultConfig = {
   service: 'quran24-channel',
@@ -96,7 +100,7 @@ app.get('/api/channel/status', (_req, res) => {
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 9,
+    phase: 10,
     schedule: {
       loaded: Boolean(schedule),
       activeVersion: schedule?.version ?? null,
@@ -160,6 +164,52 @@ app.patch('/api/channel/schedule', requireAdminWrite, (req, res) => {
     res.status(500).json({ ok: false, error: 'Failed to save schedule' });
   }
 });
+
+app.get('/api/reciters', (_req, res) => {
+  try {
+    res.json({ ok: true, ...reciterStore.loadReciters() });
+  } catch (error) {
+    log('error', 'reciters_get_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to load reciters' });
+  }
+});
+
+app.patch('/api/reciters', requireAdminWrite, (req, res) => {
+  try {
+    const result = reciterStore.saveReciters(req.body || {});
+    if (!result.ok) {
+      res.status(400).json(result);
+      return;
+    }
+    res.json({ ok: true, ...result.reciters, validation: result.validation });
+  } catch (error) {
+    log('error', 'reciters_patch_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to save reciters' });
+  }
+});
+
+app.get('/api/media/library', (_req, res) => {
+  try {
+    res.json(mediaScanner.loadMediaIndex());
+  } catch (error) {
+    log('error', 'media_library_get_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to load media library' });
+  }
+});
+
+app.post('/api/media/scan', requireAdminWrite, (_req, res) => {
+  try {
+    res.json(mediaScanner.scanMedia());
+  } catch (error) {
+    log('error', 'media_scan_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to scan media library' });
+  }
+});
+
+app.use('/assets/reciters', express.static(join(ROOT, 'data', 'reciters'), {
+  fallthrough: true,
+  maxAge: '5m'
+}));
 
 app.use('/assets', express.static(join(ROOT, 'data', 'assets'), {
   fallthrough: true,

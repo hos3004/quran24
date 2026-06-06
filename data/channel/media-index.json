@@ -1,0 +1,367 @@
+{
+  "ok": true,
+  "generatedAt": "2026-06-06T08:09:58.328Z",
+  "roots": {
+    "quranPages": "data/assets/hafs",
+    "reciterAudio": "data/reciters",
+    "breakSlides": "data/assets/slides",
+    "audioMessages": "data/assets/audio",
+    "videos": "data/assets/videos"
+  },
+  "summary": {
+    "quranPageImages": 20,
+    "quranPageMetadata": 20,
+    "reciterAudio": 0,
+    "breakSlides": 2,
+    "audioMessages": 0,
+    "videos": 0,
+    "missingFiles": 21
+  },
+  "categories": {
+    "quranPageImages": [
+      {
+        "page": 1,
+        "path": "/assets/hafs/001.webp",
+        "bytes": 43290
+      },
+      {
+        "page": 2,
+        "path": "/assets/hafs/002.webp",
+        "bytes": 52976
+      },
+      {
+        "page": 3,
+        "path": "/assets/hafs/003.webp",
+        "bytes": 206950
+      },
+      {
+        "page": 4,
+        "path": "/assets/hafs/004.webp",
+        "bytes": 208776
+      },
+      {
+        "page": 5,
+        "path": "/assets/hafs/005.webp",
+        "bytes": 191964
+      },
+      {
+        "page": 6,
+        "path": "/assets/hafs/006.webp",
+        "bytes": 216638
+      },
+      {
+        "page": 7,
+        "path": "/assets/hafs/007.webp",
+        "bytes": 225218
+      },
+      {
+        "page": 8,
+        "path": "/assets/hafs/008.webp",
+        "bytes": 210376
+      },
+      {
+        "page": 9,
+        "path": "/assets/hafs/009.webp",
+        "bytes": 201374
+      },
+      {
+        "page": 10,
+        "path": "/assets/hafs/010.webp",
+        "bytes": 210080
+      },
+      {
+        "page": 11,
+        "path": "/assets/hafs/011.webp",
+        "bytes": 212584
+      },
+      {
+        "page": 12,
+        "path": "/assets/hafs/012.webp",
+        "bytes": 195126
+      },
+      {
+        "page": 13,
+        "path": "/assets/hafs/013.webp",
+        "bytes": 200926
+      },
+      {
+        "page": 14,
+        "path": "/assets/hafs/014.webp",
+        "bytes": 187808
+      },
+      {
+        "page": 15,
+        "path": "/assets/hafs/015.webp",
+        "bytes": 195598
+      },
+      {
+        "page": 16,
+        "path": "/assets/hafs/016.webp",
+        "bytes": 190636
+      },
+      {
+        "page": 17,
+        "path": "/assets/hafs/017.webp",
+        "bytes": 197582
+      },
+      {
+        "page": 18,
+        "path": "/assets/hafs/018.webp",
+        "bytes": 207644
+      },
+      {
+        "page": 19,
+        "path": "/assets/hafs/019.webp",
+        "bytes": 223058
+      },
+      {
+        "page": 20,
+        "path": "/assets/hafs/020.webp",
+        "bytes": 206240
+      }
+    ],
+    "quranPageMetadata": [
+      {
+        "page": 1,
+        "path": "/assets/hafs/001.json",
+        "bytes": 1374
+      },
+      {
+        "page": 2,
+        "path": "/assets/hafs/002.json",
+        "bytes": 1092
+      },
+      {
+        "page": 3,
+        "path": "/assets/hafs/003.json",
+        "bytes": 2426
+      },
+      {
+        "page": 4,
+        "path": "/assets/hafs/004.json",
+        "bytes": 1751
+      },
+      {
+        "page": 5,
+        "path": "/assets/hafs/005.json",
+        "bytes": 1099
+      },
+      {
+        "page": 6,
+        "path": "/assets/hafs/006.json",
+        "bytes": 1768
+      },
+      {
+        "page": 7,
+        "path": "/assets/hafs/007.json",
+        "bytes": 2362
+      },
+      {
+        "page": 8,
+        "path": "/assets/hafs/008.json",
+        "bytes": 1945
+      },
+      {
+        "page": 9,
+        "path": "/assets/hafs/009.json",
+        "bytes": 841
+      },
+      {
+        "page": 10,
+        "path": "/assets/hafs/010.json",
+        "bytes": 1701
+      },
+      {
+        "page": 11,
+        "path": "/assets/hafs/011.json",
+        "bytes": 1522
+      },
+      {
+        "page": 12,
+        "path": "/assets/hafs/012.json",
+        "bytes": 1471
+      },
+      {
+        "page": 13,
+        "path": "/assets/hafs/013.json",
+        "bytes": 1048
+      },
+      {
+        "page": 14,
+        "path": "/assets/hafs/014.json",
+        "bytes": 1052
+      },
+      {
+        "page": 15,
+        "path": "/assets/hafs/015.json",
+        "bytes": 1708
+      },
+      {
+        "page": 16,
+        "path": "/assets/hafs/016.json",
+        "bytes": 844
+      },
+      {
+        "page": 17,
+        "path": "/assets/hafs/017.json",
+        "bytes": 1577
+      },
+      {
+        "page": 18,
+        "path": "/assets/hafs/018.json",
+        "bytes": 1548
+      },
+      {
+        "page": 19,
+        "path": "/assets/hafs/019.json",
+        "bytes": 1549
+      },
+      {
+        "page": 20,
+        "path": "/assets/hafs/020.json",
+        "bytes": 1823
+      }
+    ],
+    "reciterAudio": [],
+    "breakSlides": [
+      {
+        "path": "/assets/slides/dua-1.jpeg",
+        "bytes": 214407
+      },
+      {
+        "path": "/assets/slides/dua-2.jpeg",
+        "bytes": 167364
+      }
+    ],
+    "audioMessages": [],
+    "videos": []
+  },
+  "missingFiles": [
+    {
+      "source": "manifest",
+      "ownerId": "page-1",
+      "path": "/assets/reciters/ajmy/Page001.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-2",
+      "path": "/assets/reciters/ajmy/Page002.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-3",
+      "path": "/assets/reciters/ajmy/Page003.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-4",
+      "path": "/assets/reciters/ajmy/Page004.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-5",
+      "path": "/assets/reciters/ajmy/Page005.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-6",
+      "path": "/assets/reciters/ajmy/Page006.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-7",
+      "path": "/assets/reciters/ajmy/Page007.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-8",
+      "path": "/assets/reciters/ajmy/Page008.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-9",
+      "path": "/assets/reciters/ajmy/Page009.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-10",
+      "path": "/assets/reciters/ajmy/Page010.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-11",
+      "path": "/assets/reciters/ajmy/Page011.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-12",
+      "path": "/assets/reciters/ajmy/Page012.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-13",
+      "path": "/assets/reciters/ajmy/Page013.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-14",
+      "path": "/assets/reciters/ajmy/Page014.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-15",
+      "path": "/assets/reciters/ajmy/Page015.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-16",
+      "path": "/assets/reciters/ajmy/Page016.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-17",
+      "path": "/assets/reciters/ajmy/Page017.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-18",
+      "path": "/assets/reciters/ajmy/Page018.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-19",
+      "path": "/assets/reciters/ajmy/Page019.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "manifest",
+      "ownerId": "page-20",
+      "path": "/assets/reciters/ajmy/Page020.mp3",
+      "reason": "not-found"
+    },
+    {
+      "source": "schedule",
+      "ownerId": "break-dua-001",
+      "path": "/assets/audio/dua.mp3",
+      "reason": "not-found"
+    }
+  ]
+}

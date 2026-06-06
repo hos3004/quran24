@@ -765,3 +765,82 @@ Notes:
 - Primary Phase 9 commit: `add4469`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 9 push without rewriting published history.
+
+## Phase 10 Summary
+
+Status: completed
+
+Goal:
+
+- Add safe reciter management.
+- Add media library indexing and scan APIs.
+- Show reciter and media state in the admin dashboard.
+- Report missing local assets clearly.
+
+What changed:
+
+- Added `server/channel/reciterStore.mjs`.
+- Added `server/channel/mediaScanner.mjs`.
+- Added `data/channel/reciters.json`.
+- Added generated `data/channel/media-index.json`.
+- Added APIs:
+  - `GET /api/reciters`
+  - `PATCH /api/reciters`
+  - `GET /api/media/library`
+  - `POST /api/media/scan`
+- Added static serving for `/assets/reciters/*` from `data/reciters`.
+- Updated `/api/channel/status` to report Phase 10.
+- Updated admin Readers and Media Library panels to use live APIs.
+- Added backend tests for scanner counts, safe asset references, and reciter validation.
+- Updated README, project map, and architecture notes.
+
+Reference used from `livestreamquran-reference`:
+
+- Reused the reciter metadata shape:
+  - `audioRootDir`
+  - `activeReciterId`
+  - `reciters[]` with `id`, `name`, `folderName`, and `audioDir`
+- Reused the idea of scanning reciter audio folders.
+
+What was intentionally not reused:
+
+- Arbitrary path editing for audio roots.
+- Unauthenticated reciter write APIs.
+- Old reciter activation side effects that directly rewrote runtime config.
+
+## Phase 10 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; $env:ADMIN_TOKEN = "phase10-token"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 10 start.
+- `git pull --ff-only`: already up to date.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 15 backend Node tests passed and 20 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Server smoke on port 3837:
+  - `GET /api/channel/status` returned `phase: 10`.
+  - `GET /api/reciters` returned active reciter `ajmy` and 2 configured reciters.
+  - Protected `POST /api/media/scan` returned 20 Quran page images and 21 missing files.
+  - `GET /api/media/library` returned the generated media index.
+  - Invalid `PATCH /api/reciters` returned 400.
+  - `GET /admin?section=readers` returned HTML containing `<title>Quran24</title>`.
+  - `GET /admin?section=media` returned HTML containing `<title>Quran24</title>`.
+
+Notes:
+
+- The 21 missing files are expected in this local clone: 20 reciter MP3 files referenced by the seeded manifest plus one optional break audio file.
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.
+- In-app Browser visual verification was not available after tool discovery; server-level smoke was used.

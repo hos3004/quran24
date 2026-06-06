@@ -25,3 +25,10 @@ test('server exposes non-mutating schedule validation endpoint', () => {
   const serverSource = readFileSync(new URL('../server/index.mjs', import.meta.url), 'utf8');
   assert.match(serverSource, /\/api\/channel\/schedule\/validate/);
 });
+
+test('server exposes Phase 10 media and reciter endpoints', () => {
+  const serverSource = readFileSync(new URL('../server/index.mjs', import.meta.url), 'utf8');
+  assert.match(serverSource, /\/api\/reciters/);
+  assert.match(serverSource, /\/api\/media\/library/);
+  assert.match(serverSource, /\/api\/media\/scan/);
+});

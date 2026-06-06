@@ -94,6 +94,11 @@ Target repository:
   - `GET /api/slides`
   - `GET /api/manifest`
   - `GET /manifest.json`
+- Current media/admin APIs:
+  - `GET /api/reciters`
+  - `PATCH /api/reciters`
+  - `GET /api/media/library`
+  - `POST /api/media/scan`
 - Android TV project does not exist yet; it starts in a later phase.
 - In the current local environment, port 3737 is already occupied by a pre-existing old Quran Broadcast server, so Quran24 smoke verification used `PORT=3837`.
 
@@ -188,6 +193,8 @@ Target schedule data:
 - Current Quran seed manifest: `data/manifest.json`, pages 1-20.
 - Current Quran seed assets: `data/assets/hafs/001-020.webp` and matching per-page JSON files.
 - Current break slide seed assets: `data/assets/slides/dua-1.jpeg` and `data/assets/slides/dua-2.jpeg`.
+- Current reciter metadata: `data/channel/reciters.json`.
+- Current media index: `data/channel/media-index.json`.
 
 ## REUSABLE_COMPONENTS_FROM_REFERENCE
 
@@ -229,6 +236,7 @@ quran24/
       scheduleStore.mjs
       scheduleValidator.mjs
       mediaScanner.mjs
+      reciterStore.mjs
       health.mjs
       telemetryStore.mjs
   data/
@@ -236,6 +244,7 @@ quran24/
       schedule.json
       schedule-history/
       media-index.json
+      reciters.json
       devices.json
     reciters/
     assets/
