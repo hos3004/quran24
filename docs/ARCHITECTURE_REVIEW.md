@@ -101,6 +101,34 @@ The validator currently checks:
 - explicit duration overlaps
 - fallback item id existence
 
+## Phase 4 Guidance
+
+Phase 4 now adds:
+
+- `client/src/channel/scheduler.ts`
+- `client/src/channel/timeSync.ts`
+- `client/src/channel/hooks/useChannelClock.ts`
+- `client/src/channel/hooks/useChannelSchedule.ts`
+- Vitest coverage for scheduler and time-sync behavior.
+
+Scheduler behavior:
+
+- A non-empty weekday block overrides `daily`.
+- An empty weekday block falls back to `daily`.
+- Active item selection uses local time in the schedule timezone.
+- If no item has started yet today, the last item is treated as carrying over from the previous day.
+- Item offsets wrap across midnight.
+- Quran page offset calculation respects `fromPage`, `toPage`, page durations, and `allowAutoContinue`.
+
+Time-sync behavior:
+
+- Takes 3 to 7 samples.
+- Chooses the lowest RTT sample.
+- Uses `performance.now()` for monotonic elapsed time.
+- Provides a resync decision helper for 3 to 5 minute re-anchoring.
+
+The current hook layer is intentionally small and does not render `/channel` yet. The visible runtime starts in Phase 5.
+
 ## Android TV Guidance
 
 Android phases should use:

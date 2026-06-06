@@ -70,6 +70,8 @@ npm run test
 npm run server
 ```
 
+The root test command runs backend Node tests and client Vitest tests.
+
 Open:
 
 ```text

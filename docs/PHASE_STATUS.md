@@ -312,3 +312,74 @@ Observed results:
 - Primary Phase 3 commit: `fd042a7`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 3 push without rewriting published history.
+
+## Phase 4 Summary
+
+Status: completed
+
+Goal:
+
+- Create deterministic pseudo-live schedule calculations.
+- Add server time sync utilities.
+- Add schedule and clock hooks.
+- Add boundary and drift tests.
+
+What changed:
+
+- Added `client/src/channel/scheduler.ts`.
+- Added `client/src/channel/timeSync.ts`.
+- Added `client/src/channel/hooks/useChannelClock.ts`.
+- Added `client/src/channel/hooks/useChannelSchedule.ts`.
+- Added `client/src/channel/scheduler.test.ts`.
+- Added `client/src/channel/timeSync.test.ts`.
+- Added client Vitest into the root `npm run test` flow.
+
+Reference used from `livestreamquran-reference`:
+
+- Preserved manifest page duration concept for Quran page offset calculation.
+- Preserved page range assumptions from the 604-page Hafs model.
+
+What was intentionally not reused:
+
+- Old sequential playback state machine.
+- Browser audio state coupling.
+- Render-mode video timeline code.
+
+## Phase 4 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+```
+
+Observed results:
+
+- `git pull --ff-only`: already up to date.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 8 backend Node tests passed and 13 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+
+Test coverage added:
+
+- exact midnight active item
+- exact item boundary
+- inside item offset
+- after last scheduled item
+- previous-day wrapped offset before first item
+- Friday override
+- invalid schedule shape
+- Quran page duration offset
+- Quran page range auto-continue wrapping
+- lowest RTT time sync sample
+- simulated 24-hour monotonic no-drift calculation
+- resync interval decision
+
+## Phase 4 Git Update
+
+Pending commit and push.

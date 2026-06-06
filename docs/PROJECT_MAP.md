@@ -62,6 +62,11 @@ Target repository:
   - `npm run lint`
 - Express server entrypoint: `server/index.mjs`
 - Vite client entrypoint: `client/src/main.tsx`
+- Channel scheduler: `client/src/channel/scheduler.ts`
+- Channel time sync: `client/src/channel/timeSync.ts`
+- Channel hooks:
+  - `client/src/channel/hooks/useChannelClock.ts`
+  - `client/src/channel/hooks/useChannelSchedule.ts`
 - Production client output: `client/dist` after `npm run build`
 - Current web routes are served by the client fallback.
 - Current compatibility API placeholders:
