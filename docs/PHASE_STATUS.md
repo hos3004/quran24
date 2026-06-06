@@ -1288,3 +1288,10 @@ Notes:
 
 - `data/channel/telemetry.json` is generated at runtime, ignored by Git, and was removed after the smoke test to avoid leaving a stale test device in local admin diagnostics.
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.
+
+## Phase 15 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 15 commit: `ff66a4a`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 15 push without rewriting published history.
