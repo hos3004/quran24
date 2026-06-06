@@ -471,11 +471,12 @@ button:focus-visible,
   min-height: 0;
   display: grid;
   place-items: center;
-  padding: clamp(36px, 6vw, 92px);
+  overflow: hidden;
+  padding: 0;
 }
 
 .channel-program {
-  width: min(1120px, 100%);
+  width: min(1120px, calc(100% - clamp(48px, 10vw, 184px)));
   min-height: min(58vh, 620px);
   display: grid;
   align-content: center;
@@ -561,6 +562,103 @@ button:focus-visible,
   transition: width 0.4s linear;
 }
 
+.quran-broadcast-scene {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #000;
+  isolation: isolate;
+}
+
+.quran-reference-stage {
+  position: relative;
+  width: min(100vw, 177.7778vh);
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.quran-page-window {
+  position: absolute;
+  left: 53.958%;
+  top: 17.13%;
+  width: 42.969%;
+  height: 62.963%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 44%, #fff7d7 0%, #fffce7 55%, #dfb35c 100%);
+}
+
+.quran-page-mount {
+  width: 82%;
+  height: 82%;
+  display: grid;
+  place-items: center;
+  background: #fffce7;
+}
+
+.quran-page-mount img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+.quran-frame-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+.quran-runtime-status {
+  position: absolute;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(560px, calc(100vw - 48px));
+  padding: 8px 12px;
+  border: 1px solid rgba(225, 191, 119, 0.28);
+  border-radius: 8px;
+  background: rgba(4, 5, 7, 0.58);
+  color: #f7f1df;
+  font-size: 14px;
+  line-height: 1.2;
+  opacity: 0;
+}
+
+.quran-runtime-status span,
+.quran-runtime-status strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quran-runtime-status span {
+  color: #d7c39a;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .quran-page-frame {
   width: min(420px, 45vw);
   aspect-ratio: 2 / 3;
@@ -586,7 +684,7 @@ button:focus-visible,
 }
 
 .channel-diagnostics {
-  display: grid;
+  display: none;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1px;
   background: rgba(245, 240, 230, 0.12);

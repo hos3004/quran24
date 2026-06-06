@@ -48,6 +48,8 @@ data/reciters/*
 !data/reciters/.gitkeep
 data/assets/*
 !data/assets/.gitkeep
+!data/assets/frames/
+!data/assets/frames/**
 !data/assets/hafs/
 !data/assets/hafs/**
 !data/assets/slides/

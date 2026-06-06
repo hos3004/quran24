@@ -15,21 +15,39 @@ export function QuranRenderer({
   const page = playback.pageOffset?.page ?? item.fromPage;
 
   return (
-    <section className="channel-program channel-quran" aria-label="Quran program">
-      <span className="program-kicker">Quran</span>
-      <h2>{item.title}</h2>
-      <div className="quran-page-frame">
-        {playback.currentEntry?.imagePath ? (
-          <img src={playback.currentEntry.imagePath} alt={`Quran page ${page}`} draggable={false} />
-        ) : (
-          <div className="quran-page-missing">Page {page}</div>
-        )}
+    <section className="quran-broadcast-scene" aria-label="Quran program">
+      <div className="quran-reference-stage">
+        <div className="quran-page-window">
+          <div className="quran-page-mount">
+            {playback.currentEntry?.imagePath ? (
+              <img src={playback.currentEntry.imagePath} alt={`Quran page ${page}`} draggable={false} />
+            ) : (
+              <div className="quran-page-missing">Page {page}</div>
+            )}
+          </div>
+        </div>
+        <img
+          className="quran-frame-overlay"
+          src="/assets/frames/frame-preset2.png"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
       </div>
-      <p>Page {page} of {item.fromPage}-{item.toPage}</p>
-      <strong>
-        {Math.floor(playback.pageOffset?.pageOffsetSec ?? offsetSec)}s page offset - audio {playback.audioState}
-      </strong>
-      {playback.audioError && <small>{playback.audioError}</small>}
+
+      <div className="quran-runtime-status" aria-hidden="true">
+        <span>{item.title}</span>
+        <strong>Page {page}</strong>
+      </div>
+
+      <span className="sr-only">
+        {playback.currentEntry?.imagePath ? (
+          <>Playing {item.title}, page {page}, audio {playback.audioState}</>
+        ) : (
+          <>Quran page {page} is missing</>
+        )}
+      </span>
+      {playback.audioError && <span className="sr-only">{playback.audioError}</span>}
     </section>
   );
 }
