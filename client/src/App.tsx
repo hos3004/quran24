@@ -38,7 +38,16 @@ type ChannelStatusResponse = {
     nativeHlsPlayback?: boolean;
     webOfflineCache?: boolean;
     androidWebViewCacheFallback?: boolean;
+    telemetryHeartbeatApi?: boolean;
+    remoteDeviceStatus?: boolean;
     heartbeat: string;
+  };
+  telemetry?: {
+    loaded: boolean;
+    totalDevices: number;
+    onlineDevices: number;
+    staleAfterSec: number;
+    source: string;
   };
   compatibility: {
     config: boolean;
@@ -47,10 +56,48 @@ type ChannelStatusResponse = {
   };
 };
 
+type TelemetryStatusResponse = {
+  ok: boolean;
+  generatedAt: string;
+  staleAfterSec: number;
+  totalDevices: number;
+  onlineDevices: number;
+  devices: {
+    deviceId: string;
+    deviceLabel: string;
+    source: string;
+    firstSeenAt: string;
+    lastSeenAt: string;
+    heartbeatCount: number;
+    ageSec: number | null;
+    stale: boolean;
+    lastHeartbeat: {
+      currentItemId?: string;
+      currentPage?: number;
+      playState: string;
+      scheduleVersion?: number;
+      clockSource?: string;
+      scheduleSource?: string;
+      manifestSource?: string;
+      androidBridgeAvailable?: boolean;
+      lastCommandType?: string;
+    };
+  }[];
+  recentEvents: {
+    type: string;
+    time: string;
+    deviceId: string;
+    currentItemId: string | null;
+    playState: string;
+    scheduleVersion: number | null;
+  }[];
+};
+
 type DiagnosticsState = {
   config: ApiConfig | null;
   health: HealthResponse | null;
   channelStatus: ChannelStatusResponse | null;
+  telemetry: TelemetryStatusResponse | null;
   errors: string[];
 };
 
@@ -65,6 +112,7 @@ export function App() {
     config: null,
     health: null,
     channelStatus: null,
+    telemetry: null,
     errors: []
   });
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -75,11 +123,12 @@ export function App() {
     Promise.allSettled([
       fetchJson<ApiConfig>('/api/config'),
       fetchJson<HealthResponse>('/api/health'),
-      fetchJson<ChannelStatusResponse>('/api/channel/status')
-    ]).then(([configResult, healthResult, statusResult]) => {
+      fetchJson<ChannelStatusResponse>('/api/channel/status'),
+      fetchJson<TelemetryStatusResponse>('/api/telemetry/devices')
+    ]).then(([configResult, healthResult, statusResult, telemetryResult]) => {
       if (cancelled) return;
 
-      const errors = [configResult, healthResult, statusResult]
+      const errors = [configResult, healthResult, statusResult, telemetryResult]
         .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
         .map((result) => result.reason instanceof Error ? result.reason.message : String(result.reason));
 
@@ -87,6 +136,7 @@ export function App() {
         config: configResult.status === 'fulfilled' ? configResult.value : null,
         health: healthResult.status === 'fulfilled' ? healthResult.value : null,
         channelStatus: statusResult.status === 'fulfilled' ? statusResult.value : null,
+        telemetry: telemetryResult.status === 'fulfilled' ? telemetryResult.value : null,
         errors
       });
 

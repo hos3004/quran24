@@ -308,6 +308,19 @@ The offline emulator smoke loaded the app once with the server available, stoppe
 
 Phase 14 does not yet package full Quran images/audio or reciter assets locally inside Android storage. It establishes runtime fallback behavior; deeper asset synchronization and storage policy can expand from this base.
 
+## Phase 15 Guidance
+
+Phase 15 now adds first-pass remote runtime telemetry:
+
+- `server/channel/telemetryStore.mjs` stores latest device heartbeat state in ignored local JSON file `data/channel/telemetry.json`.
+- `POST /api/telemetry/heartbeat` accepts compact web runtime heartbeats with current item, page, play state, schedule version, data sources, and Android bridge availability.
+- `GET /api/telemetry/devices` returns online/stale device status and a bounded recent event list for admin diagnostics.
+- `ChannelRuntime` continues Android/local heartbeat every 5 seconds and sends remote telemetry every 15 seconds.
+- `/admin?section=diagnostics` polls telemetry and shows online/stale devices.
+- `/api/channel/status` now reports Phase 15, `runtime.telemetryHeartbeatApi: true`, and `runtime.remoteDeviceStatus: true`.
+
+This phase intentionally keeps telemetry JSON-backed and bounded. It does not yet add signed device enrollment, Android-native direct upload, alerting, or a database-backed fleet history. Those can be added once deployment topology is clearer.
+
 ## Android TV Guidance
 
 Android phases should use:

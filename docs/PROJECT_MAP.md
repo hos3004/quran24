@@ -53,6 +53,7 @@ Target flow:
 12. Android watchdog reloads WebView if heartbeat stalls.
 13. WebView tries cached channel HTML/assets before native recovery.
 14. Web runtime falls back to cached schedule, cached manifest, and local clock when server APIs are unavailable.
+15. Web runtime posts compact remote telemetry heartbeats for admin diagnostics.
 
 ## CURRENT_ENTRYPOINTS
 
@@ -72,6 +73,7 @@ Target repository:
   - `client/src/channel/hooks/useChannelClock.ts`
   - `client/src/channel/hooks/useChannelSchedule.ts`
 - Offline cache helper: `client/src/channel/offlineCache.ts`
+- Runtime telemetry helper: `client/src/channel/telemetry.ts`
 - Channel runtime shell: `client/src/channel/renderers/ChannelRuntime.tsx`
 - Admin dashboard:
   - `client/src/admin/AdminDashboard.tsx`
@@ -99,6 +101,9 @@ Target repository:
   - `GET /api/slides`
   - `GET /api/manifest`
   - `GET /manifest.json`
+- Current telemetry APIs:
+  - `POST /api/telemetry/heartbeat`
+  - `GET /api/telemetry/devices`
 - Current media/admin APIs:
   - `GET /api/reciters`
   - `PATCH /api/reciters`
@@ -301,7 +306,7 @@ Architecture priorities:
 - Remote `quran24` has no `main` branch yet; Phase 0 starts from an unborn repository.
 - Reference audio assets are gitignored and absent locally; early phases must not assume committed MP3 files.
 - Android dependency versions must be checked against official Android sources before Android phases; Phase 11 uses Android Gradle Plugin 9.2.0, compile/target SDK 36, AndroidX WebKit 1.16.0, and Gradle 9.4.1.
-- WebView audio can be fragile for 24/7 use; native video/HLS ownership moved to Android in Phase 13, while Phase 14 adds cached schedule/manifest and local clock fallback for network loss.
+- WebView audio can be fragile for 24/7 use; native video/HLS ownership moved to Android in Phase 13, Phase 14 adds cached schedule/manifest and local clock fallback for network loss, and Phase 15 adds remote heartbeat visibility.
 - Menu keys can be reserved by TV launchers; Phase 11 also supports long press OK/DPAD_CENTER for hidden settings.
 - Schedule validation must block path traversal and unsafe local paths from the first write API phase.
 - Time sync must use `performance.now()` anchoring to avoid drift and wall-clock jumps.

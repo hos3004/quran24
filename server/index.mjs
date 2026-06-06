@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createMediaScanner } from './channel/mediaScanner.mjs';
 import { createReciterStore } from './channel/reciterStore.mjs';
 import { createScheduleStore } from './channel/scheduleStore.mjs';
+import { createTelemetryStore } from './channel/telemetryStore.mjs';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ const packageJson = readJsonIfExists(join(ROOT, 'package.json'), { version: '0.0
 const scheduleStore = createScheduleStore({ rootDir: ROOT, logger: log });
 const reciterStore = createReciterStore({ rootDir: ROOT, logger: log });
 const mediaScanner = createMediaScanner({ rootDir: ROOT, logger: log });
+const telemetryStore = createTelemetryStore({ rootDir: ROOT, logger: log });
 
 const defaultConfig = {
   service: 'quran24-channel',
@@ -88,10 +90,16 @@ app.get('/api/health', (_req, res) => {
 
 app.get('/api/channel/status', (_req, res) => {
   let schedule = null;
+  let telemetry = null;
   try {
     schedule = scheduleStore.loadSchedule();
   } catch (error) {
     log('error', 'schedule_status_load_failed', { message: error.message });
+  }
+  try {
+    telemetry = telemetryStore.getStatus();
+  } catch (error) {
+    log('warn', 'telemetry_status_load_failed', { message: error.message });
   }
 
   res.json({
@@ -100,7 +108,7 @@ app.get('/api/channel/status', (_req, res) => {
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 14,
+    phase: 15,
     schedule: {
       loaded: Boolean(schedule),
       activeVersion: schedule?.version ?? null,
@@ -117,7 +125,16 @@ app.get('/api/channel/status', (_req, res) => {
       nativeHlsPlayback: true,
       webOfflineCache: true,
       androidWebViewCacheFallback: true,
+      telemetryHeartbeatApi: true,
+      remoteDeviceStatus: true,
       heartbeat: 'every-5-sec'
+    },
+    telemetry: {
+      loaded: Boolean(telemetry),
+      totalDevices: telemetry?.totalDevices ?? 0,
+      onlineDevices: telemetry?.onlineDevices ?? 0,
+      staleAfterSec: telemetry?.staleAfterSec ?? 45,
+      source: 'data/channel/telemetry.json'
     },
     compatibility: {
       config: true,
@@ -125,6 +142,28 @@ app.get('/api/channel/status', (_req, res) => {
       slides: true
     }
   });
+});
+
+app.post('/api/telemetry/heartbeat', (req, res) => {
+  try {
+    const result = telemetryStore.recordHeartbeat(req.body || {}, {
+      userAgent: req.get('user-agent') || '',
+      remoteAddress: req.ip || req.socket.remoteAddress || ''
+    });
+    res.json(result);
+  } catch (error) {
+    log('warn', 'telemetry_heartbeat_rejected', { message: error.message });
+    res.status(400).json({ ok: false, error: 'Invalid telemetry heartbeat' });
+  }
+});
+
+app.get('/api/telemetry/devices', (_req, res) => {
+  try {
+    res.json(telemetryStore.getStatus());
+  } catch (error) {
+    log('error', 'telemetry_devices_failed', { message: error.message });
+    res.status(500).json({ ok: false, error: 'Failed to load telemetry devices' });
+  }
 });
 
 app.get('/api/channel/schedule', (_req, res) => {

@@ -21,6 +21,7 @@ Current behavior:
 - Native playback sends `VIDEO_FINISHED`, `VIDEO_FAILED`, and `RESUME_CHANNEL` commands back to the web runtime.
 - WebView tries `LOAD_CACHE_ELSE_NETWORK` once before showing native recovery for main-frame load failures.
 - The web runtime stores last-good schedule and manifest payloads in localStorage and uses local clock fallback when server time is unavailable.
+- The web runtime posts remote telemetry heartbeats so `/admin?section=diagnostics` can show online/stale device status.
 
 ## Build
 
@@ -75,6 +76,7 @@ Expected result:
 - Logcat shows `Quran24TV` heartbeat messages when `/channel` is healthy.
 - Media3 logs appear when video or HLS bridge events are active.
 - Offline smoke can show `Clock Source local` when the server is unavailable after a prior successful load.
+- Diagnostics can show the emulator/device after `/channel` has posted at least one telemetry heartbeat.
 
 Useful logcat filter:
 
@@ -91,3 +93,4 @@ During development, security software can flag actions such as Gradle wrapper ex
 - Phase 12: bridge receiver and WebView heartbeat watchdog. Completed.
 - Phase 13: Media3/ExoPlayer MP4 and HLS playback for video/live stream items. Completed with Media3 `1.10.1`.
 - Phase 14: offline cache and local-first recovery. Completed for WebView cache, schedule cache, manifest cache, and local clock fallback.
+- Phase 15: remote telemetry and admin device diagnostics. Completed through WebView runtime heartbeat upload.

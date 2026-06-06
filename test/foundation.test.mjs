@@ -33,9 +33,9 @@ test('server exposes Phase 10 media and reciter endpoints', () => {
   assert.match(serverSource, /\/api\/media\/scan/);
 });
 
-test('Android TV Phase 14 offline cache is present and reported', () => {
+test('Android TV Phase 15 telemetry and diagnostics are present and reported', () => {
   const serverSource = readFileSync(new URL('../server/index.mjs', import.meta.url), 'utf8');
-  assert.match(serverSource, /phase:\s*14/);
+  assert.match(serverSource, /phase:\s*15/);
   assert.match(serverSource, /androidTvShell:\s*true/);
   assert.match(serverSource, /androidBridgeReceiver:\s*true/);
   assert.match(serverSource, /androidWatchdog:\s*true/);
@@ -43,6 +43,10 @@ test('Android TV Phase 14 offline cache is present and reported', () => {
   assert.match(serverSource, /nativeHlsPlayback:\s*true/);
   assert.match(serverSource, /webOfflineCache:\s*true/);
   assert.match(serverSource, /androidWebViewCacheFallback:\s*true/);
+  assert.match(serverSource, /telemetryHeartbeatApi:\s*true/);
+  assert.match(serverSource, /remoteDeviceStatus:\s*true/);
+  assert.match(serverSource, /\/api\/telemetry\/heartbeat/);
+  assert.match(serverSource, /\/api\/telemetry\/devices/);
   assert.equal(existsSync(new URL('../android-tv/app/src/main/AndroidManifest.xml', import.meta.url)), true);
   assert.equal(
     existsSync(new URL('../android-tv/app/src/main/kotlin/com/quran24/tv/MainActivity.kt', import.meta.url)),

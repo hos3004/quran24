@@ -38,11 +38,60 @@ type AdminDiagnostics = {
       nativeHlsPlayback?: boolean;
       webOfflineCache?: boolean;
       androidWebViewCacheFallback?: boolean;
+      telemetryHeartbeatApi?: boolean;
+      remoteDeviceStatus?: boolean;
       heartbeat: string;
+    };
+    telemetry?: {
+      loaded: boolean;
+      totalDevices: number;
+      onlineDevices: number;
+      staleAfterSec: number;
+      source: string;
     };
     compatibility: { config: boolean; manifest: boolean; slides: boolean };
   } | null;
+  telemetry: TelemetryStatus | null;
   errors: string[];
+};
+
+type TelemetryDeviceStatus = {
+  deviceId: string;
+  deviceLabel: string;
+  source: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  heartbeatCount: number;
+  ageSec: number | null;
+  stale: boolean;
+  lastHeartbeat: {
+    currentItemId?: string;
+    currentPage?: number;
+    playState: string;
+    scheduleVersion?: number;
+    clockSource?: string;
+    scheduleSource?: string;
+    manifestSource?: string;
+    androidBridgeAvailable?: boolean;
+    lastCommandType?: string;
+  };
+};
+
+type TelemetryStatus = {
+  ok: boolean;
+  generatedAt: string;
+  staleAfterSec: number;
+  totalDevices: number;
+  onlineDevices: number;
+  devices: TelemetryDeviceStatus[];
+  recentEvents: {
+    type: string;
+    time: string;
+    deviceId: string;
+    currentItemId: string | null;
+    playState: string;
+    scheduleVersion: number | null;
+  }[];
 };
 
 type ScheduleResponse = {
@@ -596,6 +645,7 @@ function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostic
         <Metric label="Service" value={diagnostics.health?.service ?? diagnostics.config?.service ?? 'quran24-channel'} />
         <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 14)} />
         <Metric label="Schedule" value={String(diagnostics.channelStatus?.schedule.activeVersion ?? 'none')} />
+        <Metric label="Devices Online" value={`${diagnostics.telemetry?.onlineDevices ?? diagnostics.channelStatus?.telemetry?.onlineDevices ?? 0}/${diagnostics.telemetry?.totalDevices ?? diagnostics.channelStatus?.telemetry?.totalDevices ?? 0}`} />
       </div>
     </section>
   );
@@ -873,10 +923,36 @@ function MediaPanel() {
 
 function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostics; loadState: LoadState }) {
   const compatibility = diagnostics.channelStatus?.compatibility;
+  const [telemetry, setTelemetry] = useState<TelemetryStatus | null>(diagnostics.telemetry);
+  const [telemetryMessage, setTelemetryMessage] = useState('Loading telemetry');
+
+  const loadTelemetry = useCallback(() => {
+    fetch('/api/telemetry/devices', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Telemetry request failed: ${response.status}`);
+        return response.json() as Promise<TelemetryStatus>;
+      })
+      .then((payload) => {
+        setTelemetry(payload);
+        setTelemetryMessage(`Telemetry refreshed ${new Date(payload.generatedAt).toLocaleTimeString()}`);
+      })
+      .catch((error) => {
+        setTelemetryMessage(error instanceof Error ? error.message : String(error));
+      });
+  }, []);
+
+  useEffect(() => {
+    loadTelemetry();
+    const timer = window.setInterval(loadTelemetry, 15000);
+    return () => window.clearInterval(timer);
+  }, [loadTelemetry]);
 
   return (
     <section className="admin-panel">
-      <h2>Diagnostics</h2>
+      <div className="admin-panel-title">
+        <h2>Diagnostics</h2>
+        <button type="button" onClick={loadTelemetry}>Refresh Telemetry</button>
+      </div>
       <div className="diagnostics-table">
         <div>
           <span>Load State</span>
@@ -927,6 +1003,22 @@ function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagno
           <strong>{diagnostics.channelStatus?.runtime.androidWebViewCacheFallback ? 'ready' : 'pending'}</strong>
         </div>
         <div>
+          <span>Telemetry API</span>
+          <strong>{diagnostics.channelStatus?.runtime.telemetryHeartbeatApi ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Remote Device Status</span>
+          <strong>{diagnostics.channelStatus?.runtime.remoteDeviceStatus ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Devices Online</span>
+          <strong>{telemetry ? `${telemetry.onlineDevices}/${telemetry.totalDevices}` : 'Unavailable'}</strong>
+        </div>
+        <div>
+          <span>Telemetry Message</span>
+          <strong>{telemetryMessage}</strong>
+        </div>
+        <div>
           <span>Compatibility APIs</span>
           <strong>
             {compatibility
@@ -938,6 +1030,22 @@ function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagno
           <span>Errors</span>
           <strong>{diagnostics.errors.length ? diagnostics.errors.join(' | ') : 'None'}</strong>
         </div>
+      </div>
+      <div className="diagnostics-table compact">
+        {(telemetry?.devices.slice(0, 8) ?? []).map((device) => (
+          <div key={device.deviceId}>
+            <span>{device.deviceLabel}</span>
+            <strong>
+              {device.stale ? 'stale' : 'online'} / {device.lastHeartbeat.playState} / {device.lastHeartbeat.currentItemId ?? 'none'} / {device.ageSec ?? '?'}s ago
+            </strong>
+          </div>
+        ))}
+        {telemetry && telemetry.devices.length === 0 && (
+          <div>
+            <span>Devices</span>
+            <strong>No runtime heartbeats received yet</strong>
+          </div>
+        )}
       </div>
     </section>
   );

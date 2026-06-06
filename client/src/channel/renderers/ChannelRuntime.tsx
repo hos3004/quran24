@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateQuranPageFromOffset, getActiveScheduleItem, type QuranManifestEntry } from '../scheduler';
 import { emitHeartbeat, logRuntime } from '../logger';
 import { loadCachedPayload, saveCachedPayload } from '../offlineCache';
 import { setRuntimeSnapshot } from '../runtimeStore';
+import { postRuntimeTelemetry, type RuntimeTelemetryHeartbeat } from '../telemetry';
 import { subscribeWebRuntimeCommands, type WebRuntimeCommand } from '../bridge/androidBridge';
 import { useChannelClock } from '../hooks/useChannelClock';
 import { useChannelSchedule } from '../hooks/useChannelSchedule';
@@ -29,6 +30,9 @@ export function ChannelRuntime() {
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [manifestSource, setManifestSource] = useState<'network' | 'cache' | null>(null);
   const [lastCommand, setLastCommand] = useState<WebRuntimeCommand | null>(null);
+  const telemetryRef = useRef<RuntimeTelemetryHeartbeat>({
+    playState: 'loading'
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -86,6 +90,18 @@ export function ChannelRuntime() {
     ? calculateQuranPageFromOffset(active.item, manifest, active.offsetSec)?.page ?? active.item.fromPage
     : undefined;
   const playState = scheduleState.loading || clockState.syncing ? 'loading' : active ? 'playing' : 'idle';
+  telemetryRef.current = {
+    currentItemId: active?.item.id,
+    currentPage,
+    playState,
+    scheduleVersion: scheduleState.schedule?.version,
+    offsetSec: active?.offsetSec,
+    clockSource: clockState.source,
+    scheduleSource: scheduleState.source,
+    manifestSource,
+    manifestPageCount: manifest.length,
+    lastCommandType: lastCommand?.type
+  };
 
   useEffect(() => {
     setRuntimeSnapshot({
@@ -114,6 +130,20 @@ export function ChannelRuntime() {
     const timer = window.setInterval(sendHeartbeat, 5000);
     return () => window.clearInterval(timer);
   }, [active?.item.id, currentPage, playState]);
+
+  useEffect(() => {
+    const sendTelemetry = () => {
+      postRuntimeTelemetry(telemetryRef.current).catch((error) => {
+        logRuntime('warn', 'telemetry_heartbeat_failed', {
+          message: error instanceof Error ? error.message : String(error)
+        });
+      });
+    };
+
+    sendTelemetry();
+    const timer = window.setInterval(sendTelemetry, 15000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   return (
     <main className="channel-runtime-shell">

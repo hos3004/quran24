@@ -1215,3 +1215,76 @@ Notes:
 - Primary Phase 14 commit: `3ff1e0c`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 14 push without rewriting published history.
+
+## Phase 15 Summary
+
+Status: completed
+
+Goal:
+
+- Add first-pass runtime telemetry and remote device status.
+- Let admin diagnostics see whether a channel runtime is online or stale.
+- Keep telemetry bounded and file-backed for local/LAN deployments.
+
+What changed:
+
+- Added `server/channel/telemetryStore.mjs`.
+- Added `POST /api/telemetry/heartbeat`.
+- Added `GET /api/telemetry/devices`.
+- Added ignored local telemetry file path `data/channel/telemetry.json`.
+- Updated `/api/channel/status` to report Phase 15, `telemetryHeartbeatApi: true`, and `remoteDeviceStatus: true`.
+- Added `client/src/channel/telemetry.ts` for stable runtime device ids and compact heartbeat upload.
+- `ChannelRuntime` now posts remote telemetry every 15 seconds while keeping Android/local heartbeat every 5 seconds.
+- Admin diagnostics now polls telemetry and shows online/stale devices.
+- Added backend telemetry store tests and client telemetry tests.
+- Updated README, project map, architecture review, and Android TV docs.
+
+What was intentionally not added:
+
+- No database-backed fleet history yet.
+- No signed device enrollment yet.
+- No Android-native direct telemetry uploader yet; the current uploader runs inside the WebView runtime.
+- No alerting/notification pipeline yet.
+
+## Phase 15 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+npm run test
+npm run build
+npm run lint
+cd android-tv
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.17.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+cd ..
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 15 start.
+- `git pull --ff-only`: already up to date.
+- `npm run test`: 18 backend Node tests and 24 client Vitest tests passed.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Android build passed.
+- Android lint passed.
+- API smoke on `PORT=3837` returned:
+  - `GET /api/health`: `ok: true`
+  - `GET /api/channel/status`: `phase: 15`, `runtime.telemetryHeartbeatApi: true`, `runtime.remoteDeviceStatus: true`
+  - `POST /api/telemetry/heartbeat`: `ok: true`
+  - `GET /api/telemetry/devices`: `totalDevices: 1`, `onlineDevices: 1`, `firstDevice: phase15-smoke-tv`
+- The temporary server was stopped after smoke.
+- `Get-NetTCPConnection -LocalPort 3837 -State Listen` returned no listener after smoke.
+
+Notes:
+
+- `data/channel/telemetry.json` is generated at runtime, ignored by Git, and was removed after the smoke test to avoid leaving a stale test device in local admin diagnostics.
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.

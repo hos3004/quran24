@@ -193,6 +193,7 @@ p {
 .admin-live-link,
 .admin-tabs a,
 .admin-actions button,
+.admin-panel-title button,
 .item-type-row button,
 .schedule-list button,
 .item-editor button {
@@ -209,6 +210,7 @@ p {
 .admin-live-link,
 .admin-tabs a,
 .admin-actions button,
+.admin-panel-title button,
 .item-type-row button,
 .item-editor button {
   display: inline-flex;
@@ -326,6 +328,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 button:focus-visible,
+.admin-panel-title button:focus-visible,
 .admin-tabs a:focus-visible,
 .admin-live-link:focus-visible {
   outline: 3px solid #e1bf77;
