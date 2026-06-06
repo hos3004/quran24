@@ -30,17 +30,24 @@ export function QuranRenderer({
     ?? themes.find((candidate) => candidate.id === `preset-${item.layoutPresetId}`)
     ?? themes[0]
     ?? DEFAULT_THEME;
+  const quranScrollY = -(playback.audioProgress * 22);
   const pageStyle = {
     '--theme-bg': theme.background,
     '--page-left': `${(theme.page.x / 1920) * 100}%`,
     '--page-top': `${(theme.page.y / 1080) * 100}%`,
     '--page-width': `${(theme.page.w / 1920) * 100}%`,
     '--page-height': `${(theme.page.h / 1080) * 100}%`,
-    '--quran-zoom': `${theme.quranZoom * 100}%`
+    '--quran-zoom': `${theme.quranZoom * 100}%`,
+    '--quran-scroll-y': `${quranScrollY}%`
   } as CSSProperties;
 
   return (
-    <section className="quran-broadcast-scene" aria-label="Quran program" style={pageStyle}>
+    <section
+      className="quran-broadcast-scene"
+      aria-label="Quran program"
+      data-audio-state={playback.audioState}
+      style={pageStyle}
+    >
       <div className="quran-reference-stage">
         <div className="quran-page-window">
           <div className="quran-page-mount">
@@ -62,12 +69,15 @@ export function QuranRenderer({
 
       <div className="quran-runtime-status" aria-hidden="true">
         <span>{item.title} / {theme.name}</span>
-        <strong>{item.reciterId} / Page {page}</strong>
+        <strong>{item.reciterId} / Page {page} / {Math.round(playback.audioProgress * 100)}%</strong>
       </div>
 
       <span className="sr-only">
         {playback.currentEntry?.imagePath ? (
-          <>Playing {item.title}, page {page}, audio {playback.audioState}</>
+          <>
+            Playing {item.title}, page {page}, audio {playback.audioState},
+            {Math.round(playback.audioCurrentTime)} of {Math.round(playback.audioDuration)} seconds.
+          </>
         ) : (
           <>Quran page {page} is missing</>
         )}

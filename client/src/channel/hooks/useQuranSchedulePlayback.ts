@@ -8,6 +8,10 @@ export type QuranPlaybackState = {
   nextEntry: QuranManifestEntry | null;
   audioState: 'idle' | 'loading' | 'playing' | 'missing' | 'error';
   audioError: string | null;
+  audioSrc: string | null;
+  audioCurrentTime: number;
+  audioDuration: number;
+  audioProgress: number;
 };
 
 export function useQuranSchedulePlayback(
@@ -19,6 +23,8 @@ export function useQuranSchedulePlayback(
   const targetOffsetRef = useRef(0);
   const [audioState, setAudioState] = useState<QuranPlaybackState['audioState']>('idle');
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [audioClock, setAudioClock] = useState({ currentTime: 0, duration: 0 });
 
   const pageOffset = useMemo(
     () => calculateQuranPageFromOffset(item, manifest, offsetSec),
@@ -55,18 +61,40 @@ export function useQuranSchedulePlayback(
   }, [currentEntry, nextEntry]);
 
   useEffect(() => {
-    if (!audioRef.current) audioRef.current = new Audio();
+    if (!audioRef.current) {
+      const audio = document.createElement('audio');
+      audio.autoplay = true;
+      audio.controls = false;
+      audio.preload = 'auto';
+      audio.style.display = 'none';
+      audio.setAttribute('playsinline', 'true');
+      document.body.appendChild(audio);
+      audioRef.current = audio;
+    }
     const audio = audioRef.current;
 
     if (!currentEntry?.audioPath) {
       audio.pause();
       audio.removeAttribute('src');
+      setAudioSrc(null);
+      setAudioClock({ currentTime: 0, duration: 0 });
       setAudioState('missing');
       setAudioError('No audio path for current page');
       return;
     }
 
     let cancelled = false;
+    const nextAudioSrc = audioPathForReciter(currentEntry.audioPath, item.reciterId);
+    const requestPlayback = () => {
+      audio.muted = false;
+      audio.volume = 1;
+      audio.play().catch((error: unknown) => {
+        if (cancelled) return;
+        setAudioState('error');
+        setAudioError(error instanceof Error ? error.message : String(error));
+      });
+    };
+
     const onError = () => {
       if (cancelled) return;
       setAudioState('error');
@@ -84,22 +112,32 @@ export function useQuranSchedulePlayback(
       } catch {
         // Some browsers refuse seeking before enough data is buffered.
       }
+      setAudioClock({
+        currentTime: Number.isFinite(audio.currentTime) ? audio.currentTime : 0,
+        duration: Number.isFinite(audio.duration) ? audio.duration : 0
+      });
+      requestPlayback();
+    };
+
+    const onCanPlay = () => {
+      if (!cancelled && audio.paused) requestPlayback();
     };
 
     audio.addEventListener('error', onError);
     audio.addEventListener('playing', onPlaying);
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('canplay', onCanPlay);
     audio.preload = 'auto';
-    audio.src = audioPathForReciter(currentEntry.audioPath, item.reciterId);
+    audio.src = nextAudioSrc;
+    audio.muted = false;
+    audio.volume = 1;
     audio.load();
+    setAudioSrc(nextAudioSrc);
+    setAudioClock({ currentTime: 0, duration: 0 });
     setAudioState('loading');
     setAudioError(null);
 
-    audio.play().catch((error: unknown) => {
-      if (cancelled) return;
-      setAudioState('error');
-      setAudioError(error instanceof Error ? error.message : String(error));
-    });
+    requestPlayback();
 
     return () => {
       cancelled = true;
@@ -107,8 +145,26 @@ export function useQuranSchedulePlayback(
       audio.removeEventListener('error', onError);
       audio.removeEventListener('playing', onPlaying);
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('canplay', onCanPlay);
     };
   }, [currentEntry?.audioPath, item.reciterId]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+      const currentTime = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+      setAudioClock((previous) => {
+        const currentDelta = Math.abs(previous.currentTime - currentTime);
+        const durationDelta = Math.abs(previous.duration - duration);
+        if (currentDelta < 0.2 && durationDelta < 0.2) return previous;
+        return { currentTime, duration };
+      });
+    }, 250);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -129,18 +185,31 @@ export function useQuranSchedulePlayback(
 
   useEffect(() => {
     return () => {
-      audioRef.current?.pause();
-      audioRef.current?.removeAttribute('src');
+      const audio = audioRef.current;
+      audio?.pause();
+      audio?.removeAttribute('src');
+      audio?.remove();
       audioRef.current = null;
     };
   }, []);
+
+  const fallbackDuration = pageOffset?.pageDurationSec ?? 0;
+  const audioDuration = audioClock.duration > 0 ? audioClock.duration : fallbackDuration;
+  const audioCurrentTime = audioClock.currentTime > 0 ? audioClock.currentTime : (pageOffset?.pageOffsetSec ?? 0);
+  const audioProgress = audioDuration > 0
+    ? Math.min(1, Math.max(0, audioCurrentTime / audioDuration))
+    : 0;
 
   return {
     pageOffset,
     currentEntry,
     nextEntry,
     audioState,
-    audioError
+    audioError,
+    audioSrc,
+    audioCurrentTime,
+    audioDuration,
+    audioProgress
   };
 }
 

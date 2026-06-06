@@ -611,10 +611,13 @@ button:focus-visible,
 
 .quran-page-mount {
   width: var(--quran-zoom, 82%);
-  height: var(--quran-zoom, 82%);
+  height: 112%;
   display: grid;
   place-items: center;
   background: #fffce7;
+  transform: translate3d(0, var(--quran-scroll-y, 0%), 0);
+  transition: transform 0.28s linear;
+  will-change: transform;
 }
 
 .quran-page-mount img {
