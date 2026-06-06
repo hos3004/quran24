@@ -1032,3 +1032,10 @@ Notes:
 
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837` plus `adb reverse`.
 - Phase 12 observes video/live-stream requests but does not play them natively; Media3 ownership begins in Phase 13.
+
+## Phase 12 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 12 commit: `55d8e61`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 12 push without rewriting published history.
