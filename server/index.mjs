@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 
 dotenv.config();
@@ -14,6 +15,7 @@ const ROOT = resolve(__dirname, '..');
 const CLIENT_DIST = join(ROOT, 'client', 'dist');
 const PORT = Number.parseInt(process.env.PORT || '3737', 10);
 const HOST = process.env.HOST || '0.0.0.0';
+const startedAtMs = Date.now();
 
 const app = express();
 
@@ -21,6 +23,27 @@ app.disable('x-powered-by');
 app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
+
+function readJsonIfExists(filePath, fallback) {
+  if (!existsSync(filePath)) return fallback;
+  try {
+    return JSON.parse(readFileSync(filePath, 'utf8'));
+  } catch (error) {
+    log('warn', 'json_read_failed', { filePath, message: error.message });
+    return fallback;
+  }
+}
+
+function log(level, event, fields = {}) {
+  console.log(JSON.stringify({
+    level,
+    event,
+    time: new Date().toISOString(),
+    ...fields
+  }));
+}
+
+const packageJson = readJsonIfExists(join(ROOT, 'package.json'), { version: '0.0.0' });
 
 const defaultConfig = {
   service: 'quran24-channel',
@@ -34,20 +57,54 @@ const defaultConfig = {
   slideDir: 'data/assets/slides'
 };
 
-function readJsonIfExists(filePath, fallback) {
-  if (!existsSync(filePath)) return fallback;
-  try {
-    return JSON.parse(readFileSync(filePath, 'utf8'));
-  } catch (error) {
-    console.warn(JSON.stringify({
-      level: 'warn',
-      event: 'json_read_failed',
-      filePath,
-      message: error.message
-    }));
-    return fallback;
-  }
-}
+app.use((req, res, next) => {
+  const started = performance.now();
+  res.on('finish', () => {
+    log('info', 'http_request', {
+      method: req.method,
+      path: req.originalUrl,
+      statusCode: res.statusCode,
+      durationMs: Math.round((performance.now() - started) * 100) / 100
+    });
+  });
+  next();
+});
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'quran24-channel',
+    time: new Date().toISOString(),
+    uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
+    version: packageJson.version || '0.0.0'
+  });
+});
+
+app.get('/api/channel/status', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'quran24-channel',
+    time: new Date().toISOString(),
+    uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
+    version: packageJson.version || '0.0.0',
+    phase: 2,
+    schedule: {
+      loaded: false,
+      activeVersion: null,
+      source: 'not-implemented-yet'
+    },
+    runtime: {
+      channelRoute: '/channel',
+      androidBridge: false,
+      heartbeat: 'not-implemented-yet'
+    },
+    compatibility: {
+      config: true,
+      manifest: true,
+      slides: true
+    }
+  });
+});
 
 app.use('/assets', express.static(join(ROOT, 'data', 'assets'), {
   fallthrough: true,
@@ -72,7 +129,7 @@ if (existsSync(CLIENT_DIST)) {
   app.use(express.static(CLIENT_DIST, { maxAge: '1m' }));
 }
 
-app.get('*', (_req, res) => {
+app.get(/.*/, (_req, res) => {
   const indexPath = join(CLIENT_DIST, 'index.html');
   if (existsSync(indexPath)) {
     res.sendFile(indexPath);
@@ -101,19 +158,16 @@ app.get('*', (_req, res) => {
 });
 
 const server = app.listen(PORT, HOST, () => {
-  console.log(JSON.stringify({
-    level: 'info',
-    event: 'server_started',
+  log('info', 'server_started', {
     service: 'quran24-channel',
     url: `http://${HOST}:${PORT}`
-  }));
+  });
 });
 
 function shutdown(signal) {
-  console.log(JSON.stringify({ level: 'info', event: 'server_shutdown', signal }));
+  log('info', 'server_shutdown', { signal });
   server.close(() => process.exit(0));
 }
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-

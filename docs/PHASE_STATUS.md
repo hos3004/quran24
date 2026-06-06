@@ -159,10 +159,12 @@ Observed results:
 - `npm run test`: 2 tests passed.
 - `npm run lint`: server syntax check and client ESLint passed.
 - Server smoke test:
-  - `http://localhost:3737/` returned 200.
-  - `http://localhost:3737/api/config` returned 200.
-  - `http://localhost:3737/api/slides` returned 200.
-  - `http://localhost:3737/api/manifest` returned 200.
+  - Initial Phase 1 smoke used port 3737 before discovering that port was already occupied by an old Quran Broadcast server in this environment.
+  - Retested during Phase 2 with `PORT=3837` against the actual Quran24 server after fixing the Express 5 fallback route.
+  - `http://localhost:3837/` returned 200 and contained `<title>Quran24</title>`.
+  - `http://localhost:3837/api/config` returned 200.
+  - `http://localhost:3837/api/slides` returned 200.
+  - `http://localhost:3837/api/manifest` returned 200.
 
 ## Phase 1 Git Update
 
@@ -170,3 +172,68 @@ Observed results:
 - Primary Phase 1 commit: `671277e`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 1 push without rewriting published history.
+
+## Phase 2 Summary
+
+Status: completed
+
+Goal:
+
+- Add health diagnostics.
+- Preserve compatibility endpoints.
+- Add structured backend logging.
+- Add a client diagnostics placeholder route.
+
+What changed:
+
+- Added `GET /api/health`.
+- Added `GET /api/channel/status`.
+- Added JSON request logging middleware.
+- Fixed Express 5 fallback routing by replacing the `*` route with a regex catch-all.
+- Updated the client app to fetch config, health, and channel status.
+- Added `/admin` diagnostics placeholder in the web client.
+- Added a test assertion for Phase 2 endpoint declarations.
+
+Reference used from `livestreamquran-reference`:
+
+- Preserved compatibility route names for config, manifest, and slides.
+- Kept server port convention 3737 as the default.
+- Did not copy reference server code wholesale.
+
+What was intentionally not reused:
+
+- Reference fallback route style, because Express 5 rejects `app.get('*')`.
+- Reference admin dashboard implementation, because Phase 2 only needs a diagnostics placeholder.
+- Unprotected write routes.
+
+## Phase 2 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git pull --ff-only`: already up to date.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 3 tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Port 3737 was already occupied by a pre-existing old Quran Broadcast server, so Quran24 smoke verification used port 3837.
+- Server smoke test on port 3837:
+  - `GET /api/health` returned 200 with `service: quran24-channel`.
+  - `GET /api/channel/status` returned 200 with `phase: 2`.
+  - `GET /` returned 200 and contained `<title>Quran24</title>`.
+  - `GET /admin` returned 200.
+  - `GET /api/config` returned 200.
+
+## Phase 2 Git Update
+
+Pending commit and push.

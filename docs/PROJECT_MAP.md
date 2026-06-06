@@ -65,11 +65,14 @@ Target repository:
 - Production client output: `client/dist` after `npm run build`
 - Current web routes are served by the client fallback.
 - Current compatibility API placeholders:
+  - `GET /api/health`
+  - `GET /api/channel/status`
   - `GET /api/config`
   - `GET /api/slides`
   - `GET /api/manifest`
   - `GET /manifest.json`
 - Android TV project does not exist yet; it starts in a later phase.
+- In the current local environment, port 3737 is already occupied by a pre-existing old Quran Broadcast server, so Quran24 smoke verification used `PORT=3837`.
 
 Reference repository:
 

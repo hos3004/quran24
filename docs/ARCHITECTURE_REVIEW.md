@@ -59,6 +59,17 @@ Phase 1 foundation now includes:
 
 The old app was not imported wholesale. Later phases should pull in small proven pieces as each phase needs them.
 
+## Phase 2 Guidance
+
+Phase 2 now adds:
+
+- `GET /api/health` with service name, ISO time, uptime, and package version.
+- `GET /api/channel/status` with early channel diagnostics and compatibility flags.
+- Structured JSON request logs from the Express server.
+- `/admin` client route that shows a diagnostics placeholder.
+
+The environment already has another server responding on port 3737, so smoke verification used `PORT=3837` for Quran24. Do not stop unrelated local processes without approval.
+
 ## Android TV Guidance
 
 Android phases should use:

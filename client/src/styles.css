@@ -128,6 +128,36 @@ p {
   outline-offset: 3px;
 }
 
+.diagnostics-table {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 240, 230, 0.12);
+  border-radius: 8px;
+  background: rgba(245, 240, 230, 0.12);
+}
+
+.diagnostics-table div {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  min-height: 56px;
+  padding: 14px 18px;
+  background: rgba(11, 17, 23, 0.86);
+}
+
+.diagnostics-table span {
+  color: #91a3af;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.diagnostics-table strong {
+  overflow-wrap: anywhere;
+  font-size: 17px;
+}
+
 @media (max-width: 760px) {
   body {
     overflow: auto;
@@ -140,5 +170,9 @@ p {
   .status-grid {
     grid-template-columns: 1fr;
   }
-}
 
+  .diagnostics-table div {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

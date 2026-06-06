@@ -15,3 +15,8 @@ test('client workspace is declared', () => {
   assert.deepEqual(pkg.workspaces, ['client']);
 });
 
+test('server declares Phase 2 health and status endpoints', () => {
+  const serverSource = readFileSync(new URL('../server/index.mjs', import.meta.url), 'utf8');
+  assert.match(serverSource, /\/api\/health/);
+  assert.match(serverSource, /\/api\/channel\/status/);
+});

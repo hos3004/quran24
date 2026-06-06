@@ -42,6 +42,13 @@ Server:
 http://localhost:3737
 ```
 
+If port 3737 is already in use:
+
+```powershell
+$env:PORT = "3837"
+npm run server
+```
+
 Client dev server:
 
 ```text
@@ -71,12 +78,14 @@ http://localhost:3737
 
 ## Current Compatibility Endpoints
 
+- `GET /api/health`
+- `GET /api/channel/status`
 - `GET /api/config`
 - `GET /api/slides`
 - `GET /api/manifest`
 - `GET /manifest.json`
 
-These endpoints are minimal Phase 1 placeholders. They are kept to preserve useful paths from the reference app while the channel-first API is built in later phases.
+These endpoints are minimal early-phase implementations. They preserve useful paths from the reference app while the channel-first API is built in later phases.
 
 ## Documentation
 
