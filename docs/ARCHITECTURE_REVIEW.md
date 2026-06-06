@@ -129,6 +129,20 @@ Time-sync behavior:
 
 The current hook layer is intentionally small and does not render `/channel` yet. The visible runtime starts in Phase 5.
 
+## Phase 5 Guidance
+
+Phase 5 now adds the visible `/channel` runtime shell:
+
+- Fetches schedule through `useChannelSchedule`.
+- Syncs server time through `useChannelClock`.
+- Calculates active item and offset through the scheduler.
+- Displays server time, local time, active item, offset, schedule version, and validation state.
+- Emits one heartbeat immediately and every 5 seconds after that.
+- Updates an in-memory runtime snapshot store.
+- Uses placeholder renderers for Quran, break, announcement, video, and live stream items.
+
+The placeholder renderers intentionally do not perform real media playback yet. Quran rendering starts in Phase 6, break/announcement rendering deepens in Phase 7, and Android video/HLS bridge behavior starts in Phase 8.
+
 ## Android TV Guidance
 
 Android phases should use:

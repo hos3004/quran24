@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ChannelRuntime } from './channel/renderers/ChannelRuntime';
 
 type ApiConfig = {
   service?: string;
@@ -91,6 +92,10 @@ export function App() {
 
   const currentPath = useMemo(() => window.location.pathname || '/', []);
   const channelPath = diagnostics.config?.channelPath ?? '/channel';
+
+  if (currentPath === '/channel') {
+    return <ChannelRuntime />;
+  }
 
   if (currentPath.startsWith('/admin')) {
     return <DiagnosticsAdmin diagnostics={diagnostics} loadState={loadState} />;

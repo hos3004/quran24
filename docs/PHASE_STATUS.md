@@ -386,3 +386,73 @@ Test coverage added:
 - Primary Phase 4 commit: `b5f3689`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 4 push without rewriting published history.
+
+## Phase 5 Summary
+
+Status: completed
+
+Goal:
+
+- Add visible `/channel` route.
+- Display active schedule state.
+- Emit runtime heartbeat every 5 seconds.
+- Add placeholder renderers for major content types.
+
+What changed:
+
+- Added `client/src/channel/logger.ts`.
+- Added `client/src/channel/runtimeStore.ts`.
+- Added `client/src/channel/renderers/ChannelRuntime.tsx`.
+- Added placeholder renderers:
+  - `QuranRenderer.tsx`
+  - `BreakRenderer.tsx`
+  - `AnnouncementRenderer.tsx`
+  - `VideoBridgeRenderer.tsx`
+  - `LiveStreamBridgeRenderer.tsx`
+- Wired `/channel` in `client/src/App.tsx`.
+- Added fullscreen channel runtime CSS.
+
+Reference used from `livestreamquran-reference`:
+
+- Preserved the idea of a fullscreen runtime separate from admin/player controls.
+- Preserved page/item metadata display direction, but not the old renderer.
+
+What was intentionally not reused:
+
+- Old Quran visual renderer, reserved for Phase 6 integration.
+- Old audio hook, reserved for scheduled Quran playback work.
+- Old controls panel.
+
+## Phase 5 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git pull --ff-only
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- `git pull --ff-only`: already up to date.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 8 backend Node tests passed and 13 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Server smoke on port 3837:
+  - `GET /channel` returned 200 and contained `<title>Quran24</title>`.
+  - `GET /api/channel/schedule` returned 200.
+  - `GET /api/health` returned 200.
+
+Notes:
+
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so smoke tests use `PORT=3837`.
+- In-app Browser automation was requested through tool discovery after the frontend change, but no browser control tool was exposed in this thread. Server-level smoke was used instead.
+
+## Phase 5 Git Update
+
+Pending commit and push.

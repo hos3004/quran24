@@ -67,6 +67,16 @@ Target repository:
 - Channel hooks:
   - `client/src/channel/hooks/useChannelClock.ts`
   - `client/src/channel/hooks/useChannelSchedule.ts`
+- Channel runtime shell: `client/src/channel/renderers/ChannelRuntime.tsx`
+- Runtime utilities:
+  - `client/src/channel/logger.ts`
+  - `client/src/channel/runtimeStore.ts`
+- Placeholder renderers:
+  - `client/src/channel/renderers/QuranRenderer.tsx`
+  - `client/src/channel/renderers/BreakRenderer.tsx`
+  - `client/src/channel/renderers/AnnouncementRenderer.tsx`
+  - `client/src/channel/renderers/VideoBridgeRenderer.tsx`
+  - `client/src/channel/renderers/LiveStreamBridgeRenderer.tsx`
 - Production client output: `client/dist` after `npm run build`
 - Current web routes are served by the client fallback.
 - Current compatibility API placeholders:

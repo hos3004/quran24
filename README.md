@@ -55,6 +55,12 @@ Client dev server:
 http://localhost:5173
 ```
 
+Channel runtime:
+
+```text
+http://localhost:3737/channel
+```
+
 ## Build
 
 ```powershell
