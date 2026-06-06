@@ -1121,3 +1121,10 @@ Notes:
 
 - The placeholder `example.com` HLS URL is not expected to play. Phase 13 verifies native player ownership and failure recovery. Real stream verification requires a valid HLS source.
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837` plus `adb reverse`.
+
+## Phase 13 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 13 commit: `38ec257`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 13 push without rewriting published history.
