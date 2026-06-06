@@ -944,3 +944,10 @@ Notes:
 - Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837` plus `adb reverse`.
 - The Android TV launcher on the emulator reserves `KEYCODE_MENU` for system behavior, so Phase 11 supports long press OK/DPAD_CENTER as the reliable hidden settings shortcut.
 - A local security tool such as Kaspersky may flag development actions like Gradle wrapper execution, APK install, `adb reverse`, hidden Node server processes, or emulator/device communication. Phase 11 did not add destructive commands or system-level persistence.
+
+## Phase 11 Git Update
+
+- Branch: `feature/channel-runtime-platform`
+- Primary Phase 11 commit: `1e5bab9`
+- Pushed: yes, to `origin/feature/channel-runtime-platform`
+- Note: this status update is recorded after the initial Phase 11 push without rewriting published history.
