@@ -49,6 +49,11 @@ type ChannelStatusResponse = {
     fridayOverrideAwareness?: boolean;
     taraweehReadiness?: boolean;
     spiritualFillerInventory?: boolean;
+    channelTelemetryAlias?: boolean;
+    channelDevicesAlias?: boolean;
+    remoteReloadCommand?: boolean;
+    webViewAssetLoader?: boolean;
+    bundledFallbackScreen?: boolean;
     heartbeat: string;
   };
   religiousSchedule?: {
@@ -106,6 +111,7 @@ type TelemetryStatusResponse = {
   staleAfterSec: number;
   totalDevices: number;
   onlineDevices: number;
+  pendingCommandCount?: number;
   devices: {
     deviceId: string;
     deviceLabel: string;

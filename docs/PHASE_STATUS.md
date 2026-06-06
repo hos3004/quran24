@@ -1471,3 +1471,94 @@ Notes:
 - Primary Phase 17 commit: `e331eb2`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 17 push without rewriting published history.
+
+## Phase 18 Summary
+
+Status: completed
+
+Goal:
+
+- Close remaining compatibility gaps from the original command.
+- Add channel telemetry/device API aliases.
+- Add protected remote reload command delivery.
+- Add Android WebViewAssetLoader local fallback.
+- Add soak test documentation.
+
+What changed:
+
+- Added `POST /api/channel/telemetry` as an alias for runtime heartbeat upload.
+- Added `GET /api/channel/devices` as an alias for device diagnostics.
+- Added protected `POST /api/channel/reload-device`.
+- Extended telemetry storage with bounded pending command queues.
+- Telemetry heartbeat responses now deliver queued reload commands.
+- Web runtime consumes queued reload commands and emits `REQUEST_RELOAD`.
+- Updated `/api/channel/status` to report Phase 18 and flags:
+  - `channelTelemetryAlias: true`
+  - `channelDevicesAlias: true`
+  - `remoteReloadCommand: true`
+  - `webViewAssetLoader: true`
+  - `bundledFallbackScreen: true`
+- Added Android WebViewAssetLoader in `MainActivity`.
+- Added bundled fallback HTML at `android-tv/app/src/main/assets/fallback.html`.
+- Main-frame load, HTTP, and SSL failures now try WebView cache first, bundled fallback second, and native recovery third.
+- Added `docs/TEST_PLAN.md`.
+- Added `docs/SOAK_TEST_RESULTS.md`.
+- Updated README, project map, architecture review, Android TV docs, tests, and admin diagnostics.
+
+What was intentionally not added:
+
+- No completed one-hour or six-hour unattended soak in this session.
+- No target-hardware production soak yet.
+- No native Android telemetry uploader with WebView package/version fields yet.
+- No full local Quran/reciter asset bundle yet.
+
+## Phase 18 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+npm run test
+npm run build
+npm run lint
+cd android-tv
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.17.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+cd ..
+$env:PORT = "3837"; $env:ADMIN_TOKEN = "phase18-smoke-token"; node server/index.mjs
+```
+
+Observed results:
+
+- `git status --short --branch`: clean at Phase 18 start.
+- `git pull --ff-only`: already up to date.
+- `npm run test`: 21 backend Node tests and 28 client Vitest tests passed.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- Android build passed.
+- Android lint passed.
+- API smoke on `PORT=3837` with a temporary `ADMIN_TOKEN` returned:
+  - `GET /api/health`: `ok: true`
+  - `GET /api/channel/status`: `phase: 18`
+  - `runtime.channelTelemetryAlias: true`
+  - `runtime.channelDevicesAlias: true`
+  - `runtime.remoteReloadCommand: true`
+  - `runtime.webViewAssetLoader: true`
+  - `runtime.bundledFallbackScreen: true`
+  - `POST /api/channel/telemetry`: `ok: true`
+  - `POST /api/channel/reload-device`: `ok: true`
+  - next `POST /api/channel/telemetry` delivered `1` command
+  - `GET /api/channel/devices`: `pendingCommandCount: 0`
+- The temporary server was stopped after smoke.
+- `Get-NetTCPConnection -LocalPort 3837 -State Listen` returned no listener after smoke.
+- `data/channel/telemetry.json` was removed after smoke because it is generated local runtime state.
+
+Notes:
+
+- `docs/SOAK_TEST_RESULTS.md` records that full unattended soak tests are still required before production deployment.
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837`.

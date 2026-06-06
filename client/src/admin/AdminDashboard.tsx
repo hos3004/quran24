@@ -48,6 +48,11 @@ type AdminDiagnostics = {
       fridayOverrideAwareness?: boolean;
       taraweehReadiness?: boolean;
       spiritualFillerInventory?: boolean;
+      channelTelemetryAlias?: boolean;
+      channelDevicesAlias?: boolean;
+      remoteReloadCommand?: boolean;
+      webViewAssetLoader?: boolean;
+      bundledFallbackScreen?: boolean;
       heartbeat: string;
     };
     religiousSchedule?: {
@@ -127,6 +132,7 @@ type TelemetryStatus = {
   staleAfterSec: number;
   totalDevices: number;
   onlineDevices: number;
+  pendingCommandCount?: number;
   devices: TelemetryDeviceStatus[];
   recentEvents: {
     type: string;
@@ -687,7 +693,7 @@ function GeneralPanel({ diagnostics, loadState }: { diagnostics: AdminDiagnostic
       <div className="status-grid">
         <Metric label="Load State" value={loadState} />
         <Metric label="Service" value={diagnostics.health?.service ?? diagnostics.config?.service ?? 'quran24-channel'} />
-        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 17)} />
+        <Metric label="Phase" value={String(diagnostics.channelStatus?.phase ?? 18)} />
         <Metric label="Schedule" value={String(diagnostics.channelStatus?.schedule.activeVersion ?? 'none')} />
         <Metric label="Devices Online" value={`${diagnostics.telemetry?.onlineDevices ?? diagnostics.channelStatus?.telemetry?.onlineDevices ?? 0}/${diagnostics.telemetry?.totalDevices ?? diagnostics.channelStatus?.telemetry?.totalDevices ?? 0}`} />
         <Metric label="Friday Override" value={diagnostics.religiousSchedule?.summary.fridayScheduleConfigured || diagnostics.channelStatus?.religiousSchedule?.fridayScheduleConfigured ? 'ready' : 'pending'} />
@@ -1093,8 +1099,28 @@ function DiagnosticsPanel({ diagnostics, loadState }: { diagnostics: AdminDiagno
           <strong>{religiousSchedule?.summary.quranPageSpan.coveredPages ?? diagnostics.channelStatus?.religiousSchedule?.quranCoveredPages ?? 0} pages</strong>
         </div>
         <div>
+          <span>Channel Telemetry API</span>
+          <strong>{diagnostics.channelStatus?.runtime.channelTelemetryAlias ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Channel Devices API</span>
+          <strong>{diagnostics.channelStatus?.runtime.channelDevicesAlias ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Remote Reload API</span>
+          <strong>{diagnostics.channelStatus?.runtime.remoteReloadCommand ? 'protected' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>WebViewAssetLoader</span>
+          <strong>{diagnostics.channelStatus?.runtime.webViewAssetLoader ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
+          <span>Bundled Fallback</span>
+          <strong>{diagnostics.channelStatus?.runtime.bundledFallbackScreen ? 'ready' : 'pending'}</strong>
+        </div>
+        <div>
           <span>Devices Online</span>
-          <strong>{telemetry ? `${telemetry.onlineDevices}/${telemetry.totalDevices}` : 'Unavailable'}</strong>
+          <strong>{telemetry ? `${telemetry.onlineDevices}/${telemetry.totalDevices} / commands ${telemetry.pendingCommandCount ?? 0}` : 'Unavailable'}</strong>
         </div>
         <div>
           <span>Telemetry Message</span>

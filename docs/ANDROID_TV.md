@@ -20,6 +20,7 @@ Current behavior:
 - Media3/ExoPlayer plays video and HLS bridge items in a native fullscreen `PlayerView` overlay.
 - Native playback sends `VIDEO_FINISHED`, `VIDEO_FAILED`, and `RESUME_CHANNEL` commands back to the web runtime.
 - WebView tries `LOAD_CACHE_ELSE_NETWORK` once before showing native recovery for main-frame load failures.
+- WebViewAssetLoader serves a bundled local fallback page at `https://appassets.androidplatform.net/channel/fallback.html`.
 - The web runtime stores last-good schedule and manifest payloads in localStorage and uses local clock fallback when server time is unavailable.
 - The web runtime posts remote telemetry heartbeats so `/admin?section=diagnostics` can show online/stale device status.
 - The web runtime reports uncaught errors and loading stalls through `RUNTIME_ERROR` and `REQUEST_RELOAD` bridge events.
@@ -79,6 +80,7 @@ Expected result:
 - Logcat shows `Web runtime requested reload` if the web runtime asks native Android to reload after a stall or error boundary.
 - Media3 logs appear when video or HLS bridge events are active.
 - Offline smoke can show `Clock Source local` when the server is unavailable after a prior successful load.
+- If cache fallback cannot satisfy a main-frame failure, Android loads the bundled fallback page before native recovery.
 - Diagnostics can show the emulator/device after `/channel` has posted at least one telemetry heartbeat.
 - Diagnostics can show religious schedule readiness from `/api/channel/religious-schedule`.
 
@@ -100,3 +102,4 @@ During development, security software can flag actions such as Gradle wrapper ex
 - Phase 15: remote telemetry and admin device diagnostics. Completed through WebView runtime heartbeat upload.
 - Phase 16: long-run stability hardening. Completed for web runtime error reporting, error boundary reload requests, and loading-stall watchdog.
 - Phase 17: religious schedule insights. Completed for Friday override, Taraweeh readiness, spiritual filler inventory, and Quran page coverage diagnostics.
+- Phase 18: WebViewAssetLoader fallback and channel telemetry/device API aliases. Completed.

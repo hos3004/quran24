@@ -1,4 +1,5 @@
 import { hasAndroidBridge } from './bridge/androidBridge';
+import { requestRuntimeReload } from './runtimeStability';
 
 const DEVICE_ID_KEY = 'quran24:telemetry-device-id:v1';
 const DEVICE_LABEL_KEY = 'quran24:telemetry-device-label:v1';
@@ -14,6 +15,15 @@ export type RuntimeTelemetryHeartbeat = {
   manifestSource?: 'network' | 'cache' | null;
   manifestPageCount?: number;
   lastCommandType?: string;
+};
+
+type RuntimeTelemetryResponse = {
+  ok: boolean;
+  commands?: {
+    id: string;
+    type: 'RELOAD_DEVICE';
+    reason?: string;
+  }[];
 };
 
 export async function postRuntimeTelemetry(heartbeat: RuntimeTelemetryHeartbeat) {
@@ -35,12 +45,21 @@ export async function postRuntimeTelemetry(heartbeat: RuntimeTelemetryHeartbeat)
     lastCommandType: heartbeat.lastCommandType
   };
   const body = JSON.stringify(payload);
-  const response = await fetch('/api/telemetry/heartbeat', {
+  const response = await fetch('/api/channel/telemetry', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,
     keepalive: body.length < 60_000
   });
+
+  if (response.ok) {
+    const result = await response.json() as RuntimeTelemetryResponse;
+    for (const command of result.commands ?? []) {
+      if (command.type === 'RELOAD_DEVICE') {
+        requestRuntimeReload(command.reason || 'remote_reload_command', { force: true });
+      }
+    }
+  }
 
   return response.ok;
 }

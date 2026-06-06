@@ -56,6 +56,7 @@ Target flow:
 15. Web runtime posts compact remote telemetry heartbeats for admin diagnostics.
 16. Web runtime reports uncaught errors and asks Android to reload stalled channel loads.
 17. Admin diagnostics summarizes Friday override, Taraweeh readiness, spiritual fillers, and Quran coverage.
+18. Android can load a bundled WebViewAssetLoader fallback and server exposes channel device API aliases.
 
 ## CURRENT_ENTRYPOINTS
 
@@ -103,6 +104,9 @@ Target repository:
   - `GET /api/channel/religious-schedule`
   - `POST /api/channel/schedule/validate`
   - `PATCH /api/channel/schedule`
+  - `POST /api/channel/telemetry`
+  - `GET /api/channel/devices`
+  - `POST /api/channel/reload-device`
   - `GET /api/config`
   - `GET /api/slides`
   - `GET /api/manifest`
@@ -338,3 +342,4 @@ Architecture priorities:
 - Phase 15: add telemetry, remote status, and diagnostics.
 - Phase 16: document and harden long-run stability.
 - Phase 17: add religious scheduling enhancements after stability.
+- Phase 18: add API aliases, WebViewAssetLoader fallback, and soak-test documentation.

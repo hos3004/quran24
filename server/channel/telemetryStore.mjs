@@ -5,6 +5,7 @@ import { join } from 'node:path';
 const DEFAULT_STALE_AFTER_SEC = 45;
 const MAX_DEVICES = 200;
 const MAX_EVENTS = 200;
+const MAX_PENDING_COMMANDS_PER_DEVICE = 10;
 const SAFE_DEVICE_ID = /^[A-Za-z0-9._:-]{3,96}$/;
 const PLAY_STATES = new Set(['idle', 'loading', 'playing', 'error', 'unknown']);
 const SOURCES = new Set(['web-runtime', 'android-tv', 'admin', 'unknown']);
@@ -32,6 +33,7 @@ export function createTelemetryStore({ rootDir, logger = () => {}, now = () => n
       version: 1,
       updatedAt: now().toISOString(),
       devices: data.devices,
+      commands: data.commands,
       recentEvents: data.recentEvents.slice(0, MAX_EVENTS)
     };
     const tempPath = `${telemetryPath}.tmp`;
@@ -50,6 +52,8 @@ export function createTelemetryStore({ rootDir, logger = () => {}, now = () => n
     const deviceId = resolveDeviceId(payload.deviceId, context);
     const current = store.devices[deviceId] ?? null;
     const heartbeat = sanitizeHeartbeat(payload);
+    const pendingCommands = store.commands[deviceId] ?? [];
+    delete store.commands[deviceId];
     const device = {
       deviceId,
       deviceLabel: sanitizeString(payload.deviceLabel, 120) || current?.deviceLabel || 'Quran24 device',
@@ -88,7 +92,47 @@ export function createTelemetryStore({ rootDir, logger = () => {}, now = () => n
     return {
       ok: true,
       device: withAge(device, serverNow),
-      totalDevices: Object.keys(store.devices).length
+      totalDevices: Object.keys(store.devices).length,
+      commands: pendingCommands
+    };
+  }
+
+  function queueReloadCommand(payload = {}) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('Reload command must be an object');
+    }
+
+    const deviceId = sanitizeDeviceId(payload.deviceId);
+    if (!deviceId) throw new Error('deviceId is required');
+
+    const store = loadTelemetry();
+    const createdAt = now().toISOString();
+    const command = {
+      id: `cmd-${Date.now().toString(36)}-${shortHash(`${deviceId}|${createdAt}|${Math.random()}`)}`,
+      type: 'RELOAD_DEVICE',
+      reason: sanitizeString(payload.reason, 160) || 'admin-requested-reload',
+      createdAt
+    };
+    store.commands[deviceId] = [
+      ...(store.commands[deviceId] ?? []),
+      command
+    ].slice(-MAX_PENDING_COMMANDS_PER_DEVICE);
+    store.recentEvents = [
+      {
+        type: 'reload-command',
+        time: createdAt,
+        deviceId,
+        reason: command.reason
+      },
+      ...store.recentEvents
+    ].slice(0, MAX_EVENTS);
+    writeTelemetry(store);
+    logger('info', 'telemetry_reload_queued', { deviceId, commandId: command.id });
+
+    return {
+      ok: true,
+      deviceId,
+      command
     };
   }
 
@@ -105,6 +149,8 @@ export function createTelemetryStore({ rootDir, logger = () => {}, now = () => n
       staleAfterSec: DEFAULT_STALE_AFTER_SEC,
       totalDevices: devices.length,
       onlineDevices: devices.filter((device) => !device.stale).length,
+      pendingCommandCount: Object.values(store.commands)
+        .reduce((count, commands) => count + (Array.isArray(commands) ? commands.length : 0), 0),
       devices,
       recentEvents: store.recentEvents.slice(0, MAX_EVENTS)
     };
@@ -114,6 +160,7 @@ export function createTelemetryStore({ rootDir, logger = () => {}, now = () => n
     telemetryPath,
     getStatus,
     loadTelemetry,
+    queueReloadCommand,
     recordHeartbeat
   };
 }
@@ -123,6 +170,7 @@ function emptyTelemetry() {
     version: 1,
     updatedAt: null,
     devices: {},
+    commands: {},
     recentEvents: []
   };
 }
@@ -140,6 +188,18 @@ function normalizeTelemetry(data) {
     normalized.recentEvents = data.recentEvents
       .filter((event) => event && typeof event === 'object')
       .slice(0, MAX_EVENTS);
+  }
+  if (data?.commands && typeof data.commands === 'object') {
+    normalized.commands = Object.fromEntries(
+      Object.entries(data.commands)
+        .filter(([deviceId, commands]) => SAFE_DEVICE_ID.test(deviceId) && Array.isArray(commands))
+        .map(([deviceId, commands]) => [
+          deviceId,
+          commands
+            .filter((command) => command && typeof command === 'object')
+            .slice(-MAX_PENDING_COMMANDS_PER_DEVICE)
+        ])
+    );
   }
   return normalized;
 }
@@ -172,6 +232,11 @@ function resolveDeviceId(input, context) {
     context.remoteAddress || 'unknown-address'
   ].join('|');
   return `device-${shortHash(fingerprint)}`;
+}
+
+function sanitizeDeviceId(input) {
+  const candidate = sanitizeString(input, 96);
+  return candidate && SAFE_DEVICE_ID.test(candidate) ? candidate : '';
 }
 
 function trimDevices(store, serverNow) {

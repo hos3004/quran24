@@ -74,3 +74,33 @@ test('telemetry store sanitizes invalid ids and detects stale devices', () => {
     rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test('telemetry store queues reload commands until the next heartbeat', () => {
+  const rootDir = mkdtempSync(join(tmpdir(), 'quran24-telemetry-'));
+  try {
+    const store = createTelemetryStore({
+      rootDir,
+      now: () => new Date('2026-06-06T12:00:00.000Z')
+    });
+
+    const queued = store.queueReloadCommand({
+      deviceId: 'android-tv-1',
+      reason: 'admin smoke reload'
+    });
+    const beforeHeartbeat = store.getStatus();
+    const heartbeat = store.recordHeartbeat({
+      deviceId: 'android-tv-1',
+      source: 'web-runtime',
+      playState: 'playing'
+    });
+    const afterHeartbeat = store.getStatus();
+
+    assert.equal(queued.ok, true);
+    assert.equal(beforeHeartbeat.pendingCommandCount, 1);
+    assert.equal(heartbeat.commands.length, 1);
+    assert.equal(heartbeat.commands[0].type, 'RELOAD_DEVICE');
+    assert.equal(afterHeartbeat.pendingCommandCount, 0);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quran24 Local Fallback</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, sans-serif;
+        background: #05080c;
+        color: #f7f1df;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        padding: 48px;
+        background: #05080c;
+      }
+
+      main {
+        width: min(920px, 100%);
+        display: grid;
+        gap: 18px;
+      }
+
+      span {
+        color: #e1bf77;
+        font-size: 18px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(42px, 7vw, 86px);
+        line-height: 1;
+      }
+
+      p {
+        margin: 0;
+        color: #b9c8cf;
+        font-size: clamp(22px, 3vw, 34px);
+        line-height: 1.35;
+      }
+
+      button {
+        width: fit-content;
+        min-height: 56px;
+        border: 1px solid rgba(225, 191, 119, 0.45);
+        border-radius: 8px;
+        background: #e1bf77;
+        color: #101820;
+        font: inherit;
+        font-size: 22px;
+        font-weight: 800;
+        padding: 0 22px;
+      }
+
+      button:focus {
+        outline: 4px solid #f7f1df;
+        outline-offset: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span>Quran24 Local Fallback</span>
+      <h1>Recovering channel</h1>
+      <p>The channel could not reach the server. This local screen is bundled in the Android TV app so the display never goes black.</p>
+      <button type="button" autofocus onclick="requestReload()">Retry</button>
+    </main>
+    <script>
+      function postBridge(event) {
+        var serialized = JSON.stringify(event);
+        if (window.Quran24Android && window.Quran24Android.postMessage) {
+          window.Quran24Android.postMessage(serialized);
+          return;
+        }
+        if (window.AndroidBridge && window.AndroidBridge.postMessage) {
+          window.AndroidBridge.postMessage(serialized);
+        }
+      }
+
+      function heartbeat() {
+        postBridge({
+          type: "HEARTBEAT",
+          timestamp: Date.now(),
+          currentItemId: "local-fallback",
+          playState: "error"
+        });
+      }
+
+      function requestReload() {
+        postBridge({
+          type: "REQUEST_RELOAD",
+          reason: "local_fallback_retry"
+        });
+      }
+
+      postBridge({
+        type: "RUNTIME_ERROR",
+        message: "Local bundled fallback loaded"
+      });
+      heartbeat();
+      window.setInterval(heartbeat, 5000);
+    </script>
+  </body>
+</html>

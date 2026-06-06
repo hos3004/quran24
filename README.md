@@ -8,7 +8,7 @@ Quran24 is being built as a channel-first successor to the reference `livestream
 Schedule + local rendering + synchronized clock = TV-like channel
 ```
 
-The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, browser-to-Android bridge events, the Android TV fullscreen WebView shell, Android-side heartbeat watchdog, native Media3 playback for video/HLS bridge items, first-pass offline cache recovery, runtime telemetry/device diagnostics, web runtime stability recovery, and religious schedule insights. Deeper local asset packaging is added in later phases.
+The current foundation includes schedule storage, server-time pseudo-live playback, Quran page rendering, break/announcement rendering, browser-to-Android bridge events, the Android TV fullscreen WebView shell, Android-side heartbeat watchdog, native Media3 playback for video/HLS bridge items, first-pass offline cache recovery, runtime telemetry/device diagnostics, web runtime stability recovery, religious schedule insights, WebViewAssetLoader fallback, and channel device API aliases. Deeper local asset packaging is added in later phases.
 
 ## Local Folders
 
@@ -99,6 +99,9 @@ http://localhost:3737
 - `GET /api/channel/religious-schedule`
 - `POST /api/channel/schedule/validate`
 - `PATCH /api/channel/schedule`
+- `POST /api/channel/telemetry`
+- `GET /api/channel/devices`
+- `POST /api/channel/reload-device`
 - `GET /api/config`
 - `GET /api/slides`
 - `GET /api/manifest`
@@ -123,6 +126,8 @@ Phase 15 adds runtime telemetry. The `/channel` web runtime posts a compact hear
 Phase 16 adds long-run stability hardening. The web runtime installs global error reporting, wraps `/channel` in a React error boundary, reports runtime errors to the Android bridge, and requests a native WebView reload if the runtime stays stuck in loading for too long.
 
 Phase 17 adds religious schedule insights. The seed schedule now includes Friday programming metadata, a safe Friday override using the available seeded Quran pages, Taraweeh readiness detection, and spiritual filler inventory for admin diagnostics.
+
+Phase 18 adds compatibility aliases and local fallback hardening. Android uses WebViewAssetLoader for a bundled fallback page, and the server exposes the requested channel telemetry/device/reload API paths.
 
 ## Seed Quran Assets
 
@@ -213,3 +218,5 @@ The TV shell is fullscreen, keeps the screen awake, loads `/channel` in WebView,
 - `docs/ARCHITECTURE_REVIEW.md`
 - `docs/PHASE_STATUS.md`
 - `docs/ANDROID_TV.md`
+- `docs/TEST_PLAN.md`
+- `docs/SOAK_TEST_RESULTS.md`

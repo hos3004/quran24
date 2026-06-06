@@ -346,6 +346,21 @@ Phase 17 now adds religious scheduling enhancements without pretending to solve 
 
 This phase intentionally avoids external prayer-time APIs, Hijri date conversion assumptions, and location-specific religious timing. Those should be added only when the deployment location policy, calculation method, and calendar authority are explicit.
 
+## Phase 18 Guidance
+
+Phase 18 closes compatibility and local fallback gaps from the original command:
+
+- `POST /api/channel/telemetry` aliases the runtime heartbeat upload path.
+- `GET /api/channel/devices` aliases the device status path.
+- `POST /api/channel/reload-device` queues a protected reload command for a device and delivers it on the next telemetry heartbeat.
+- The web runtime consumes pending reload commands from telemetry responses and emits `REQUEST_RELOAD`.
+- Android `MainActivity` now configures `WebViewAssetLoader`.
+- A bundled local fallback page is served from `https://appassets.androidplatform.net/channel/fallback.html`.
+- Main-frame load, HTTP, and SSL failures try WebView cache first, then the bundled fallback page, then native recovery.
+- `docs/TEST_PLAN.md` and `docs/SOAK_TEST_RESULTS.md` document the required one-hour, six-hour, and twenty-four-hour stability process.
+
+This phase still does not claim a completed six-hour soak. `SOAK_TEST_RESULTS.md` records that a full unattended soak remains a production gate.
+
 ## Android TV Guidance
 
 Android phases should use:

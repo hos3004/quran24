@@ -10,6 +10,7 @@ function stubBrowser() {
         store.set(key, value);
       }
     },
+    dispatchEvent: vi.fn(() => true),
     Quran24Android: {
       postMessage: vi.fn()
     }
@@ -39,7 +40,19 @@ describe('runtime telemetry', () => {
     const calls: [string, RequestInit][] = [];
     const fetchMock = vi.fn((url: string, options: RequestInit) => {
       calls.push([url, options]);
-      return Promise.resolve({ ok: true } as Response);
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          ok: true,
+          commands: [
+            {
+              id: 'cmd-1',
+              type: 'RELOAD_DEVICE',
+              reason: 'admin-check'
+            }
+          ]
+        })
+      } as Response);
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -59,7 +72,7 @@ describe('runtime telemetry', () => {
     const [, options] = calls[0];
     const body = JSON.parse(String(options.body));
     expect(ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledWith('/api/telemetry/heartbeat', expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledWith('/api/channel/telemetry', expect.objectContaining({
       method: 'POST'
     }));
     expect(body.currentItemId).toBe('quran-fajr');

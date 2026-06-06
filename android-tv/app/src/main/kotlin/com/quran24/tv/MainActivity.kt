@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.http.SslError
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -41,6 +42,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
 import org.json.JSONObject
 
@@ -57,8 +59,15 @@ class MainActivity : Activity() {
     private var lastWatchdogReloadElapsedMs = 0L
     private var consecutiveWatchdogReloads = 0
     private var cacheFallbackAttempted = false
+    private var bundledFallbackAttempted = false
     private var activeBridgeItemId: String? = null
     private var activeBridgePage: Int? = null
+    private val assetLoader by lazy {
+        WebViewAssetLoader.Builder()
+            .setDomain(LOCAL_ASSET_DOMAIN)
+            .addPathHandler("/channel/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+    }
     private val watchdogRunnable = object : Runnable {
         override fun run() {
             checkHeartbeatWatchdog()
@@ -159,6 +168,7 @@ class MainActivity : Activity() {
         }
         releaseNativePlayer(sendResumeCommand = false)
         cacheFallbackAttempted = false
+        bundledFallbackAttempted = false
         markChannelLoading()
         root.removeAllViews()
 
@@ -295,6 +305,7 @@ class MainActivity : Activity() {
         lastHeartbeatElapsedMs = now
         consecutiveWatchdogReloads = 0
         cacheFallbackAttempted = false
+        bundledFallbackAttempted = false
         webView?.settings?.cacheMode = WebSettings.LOAD_DEFAULT
     }
 
@@ -380,6 +391,19 @@ class MainActivity : Activity() {
         currentWebView.settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
         Log.w(TAG, "Trying cached WebView fallback: $reason")
         currentWebView.reload()
+        return true
+    }
+
+    private fun tryBundledFallback(reason: String): Boolean {
+        val currentWebView = webView ?: return false
+        if (bundledFallbackAttempted) return false
+
+        bundledFallbackAttempted = true
+        releaseNativePlayer(sendResumeCommand = false)
+        markChannelLoading()
+        val encodedReason = Uri.encode(reason)
+        Log.w(TAG, "Loading bundled WebView fallback: $reason")
+        currentWebView.loadUrl("$LOCAL_FALLBACK_URL?reason=$encodedReason")
         return true
     }
 
@@ -524,6 +548,14 @@ class MainActivity : Activity() {
     }
 
     private inner class ChannelWebViewClient : WebViewClient() {
+        override fun shouldInterceptRequest(
+            view: WebView,
+            request: WebResourceRequest
+        ): WebResourceResponse? {
+            return assetLoader.shouldInterceptRequest(request.url)
+                ?: super.shouldInterceptRequest(view, request)
+        }
+
         override fun onPageFinished(view: WebView, url: String) {
             markChannelLoaded()
             sendWebRuntimeCommand(JSONObject().put("type", "RESUME_CHANNEL"))
@@ -536,6 +568,7 @@ class MainActivity : Activity() {
         ) {
             if (request.isForMainFrame) {
                 if (tryCachedWebViewFallback("main_frame_error:${error.errorCode}")) return
+                if (tryBundledFallback("main_frame_error:${error.errorCode}")) return
                 showRecovery("Channel load failed: ${error.description}")
             }
         }
@@ -547,6 +580,7 @@ class MainActivity : Activity() {
         ) {
             if (request.isForMainFrame) {
                 if (tryCachedWebViewFallback("http_${errorResponse.statusCode}")) return
+                if (tryBundledFallback("http_${errorResponse.statusCode}")) return
                 showRecovery("Channel returned HTTP ${errorResponse.statusCode}")
             }
         }
@@ -558,6 +592,7 @@ class MainActivity : Activity() {
         ) {
             handler.cancel()
             if (tryCachedWebViewFallback("ssl_error")) return
+            if (tryBundledFallback("ssl_error")) return
             showRecovery("Channel SSL error")
         }
 
@@ -602,6 +637,8 @@ class MainActivity : Activity() {
 
     companion object {
         private const val TAG = "Quran24TV"
+        private const val LOCAL_ASSET_DOMAIN = "appassets.androidplatform.net"
+        private const val LOCAL_FALLBACK_URL = "https://appassets.androidplatform.net/channel/fallback.html"
         private const val WATCHDOG_CHECK_INTERVAL_MS = 5_000L
         private const val WATCHDOG_STALL_THRESHOLD_MS = 20_000L
         private const val WATCHDOG_RELOAD_COOLDOWN_MS = 15_000L

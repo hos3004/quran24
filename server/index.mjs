@@ -115,7 +115,7 @@ app.get('/api/channel/status', (_req, res) => {
     time: new Date().toISOString(),
     uptimeSec: Math.floor((Date.now() - startedAtMs) / 1000),
     version: packageJson.version || '0.0.0',
-    phase: 17,
+    phase: 18,
     schedule: {
       loaded: Boolean(schedule),
       activeVersion: schedule?.version ?? null,
@@ -142,6 +142,11 @@ app.get('/api/channel/status', (_req, res) => {
       fridayOverrideAwareness: true,
       taraweehReadiness: true,
       spiritualFillerInventory: true,
+      channelTelemetryAlias: true,
+      channelDevicesAlias: true,
+      remoteReloadCommand: true,
+      webViewAssetLoader: true,
+      bundledFallbackScreen: true,
       heartbeat: 'every-5-sec'
     },
     religiousSchedule: {
@@ -176,7 +181,7 @@ app.get('/api/channel/religious-schedule', (_req, res) => {
   }
 });
 
-app.post('/api/telemetry/heartbeat', (req, res) => {
+app.post(['/api/telemetry/heartbeat', '/api/channel/telemetry'], (req, res) => {
   try {
     const result = telemetryStore.recordHeartbeat(req.body || {}, {
       userAgent: req.get('user-agent') || '',
@@ -189,12 +194,21 @@ app.post('/api/telemetry/heartbeat', (req, res) => {
   }
 });
 
-app.get('/api/telemetry/devices', (_req, res) => {
+app.get(['/api/telemetry/devices', '/api/channel/devices'], (_req, res) => {
   try {
     res.json(telemetryStore.getStatus());
   } catch (error) {
     log('error', 'telemetry_devices_failed', { message: error.message });
     res.status(500).json({ ok: false, error: 'Failed to load telemetry devices' });
+  }
+});
+
+app.post('/api/channel/reload-device', requireAdminWrite, (req, res) => {
+  try {
+    res.json(telemetryStore.queueReloadCommand(req.body || {}));
+  } catch (error) {
+    log('warn', 'telemetry_reload_rejected', { message: error.message });
+    res.status(400).json({ ok: false, error: error.message || 'Invalid reload command' });
   }
 });
 
