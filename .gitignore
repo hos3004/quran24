@@ -11,6 +11,8 @@ dist-ssr/
 .env
 .env.*
 !.env.example
+local.properties
+android-tv/local.properties
 
 # Logs
 logs/
@@ -37,6 +39,9 @@ Thumbs.db
 .eslintcache
 *.tsbuildinfo
 .pytest_cache/
+android-tv/.gradle/
+android-tv/build/
+android-tv/app/build/
 
 # Heavy media stays local unless explicitly packaged later
 data/reciters/*

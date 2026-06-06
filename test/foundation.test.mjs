@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 test('root package exposes required Phase 1 scripts', () => {
@@ -31,4 +31,15 @@ test('server exposes Phase 10 media and reciter endpoints', () => {
   assert.match(serverSource, /\/api\/reciters/);
   assert.match(serverSource, /\/api\/media\/library/);
   assert.match(serverSource, /\/api\/media\/scan/);
+});
+
+test('Android TV Phase 11 shell is present and reported', () => {
+  const serverSource = readFileSync(new URL('../server/index.mjs', import.meta.url), 'utf8');
+  assert.match(serverSource, /phase:\s*11/);
+  assert.match(serverSource, /androidTvShell:\s*true/);
+  assert.equal(existsSync(new URL('../android-tv/app/src/main/AndroidManifest.xml', import.meta.url)), true);
+  assert.equal(
+    existsSync(new URL('../android-tv/app/src/main/kotlin/com/quran24/tv/MainActivity.kt', import.meta.url)),
+    true
+  );
 });

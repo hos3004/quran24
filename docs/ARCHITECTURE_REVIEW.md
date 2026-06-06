@@ -215,6 +215,38 @@ Phase 10 now adds safe media and reciter management:
 
 The current scan correctly reports missing reciter audio and break audio instead of masking those gaps. This is desirable until Phase 14 adds local-first/offline packaging.
 
+## Phase 11 Guidance
+
+Phase 11 now adds the native Android TV foundation:
+
+- Gradle Android project under `android-tv/`.
+- Kotlin `MainActivity` that runs fullscreen, keeps the screen awake, and loads `/channel` in WebView.
+- Android TV launcher and Leanback manifest declarations.
+- WebView configuration for JavaScript, DOM storage, media playback without user gesture, disabled file/content access, and hardware-accelerated fullscreen rendering.
+- Native recovery UI for main-frame load failures, HTTP errors, SSL errors, and WebView renderer process loss.
+- Native hidden settings screen for changing the channel URL.
+- Remote-safe settings access through Menu/Settings when available and long press OK/DPAD_CENTER when launchers reserve Menu for system behavior.
+- AndroidX WebKit dependency for current WebView package checks and renderer recovery.
+- `/api/channel/status` now reports Phase 11 and `runtime.androidTvShell: true`.
+
+Dependency choices were checked against official Android documentation during the phase:
+
+- Android Gradle Plugin 9.2.0 with compile/target SDK 36.
+- Built-in Kotlin support from the Android Gradle Plugin.
+- AndroidX WebKit 1.16.0.
+- JDK 17 for Gradle and Android builds.
+
+Phase 11 intentionally does not consume video/live stream bridge events natively yet. That belongs in Phase 13 with Media3/ExoPlayer after Phase 12 adds bridge ingestion and watchdog behavior.
+
+Android Studio emulator smoke passed with:
+
+- `adb reverse tcp:3737 tcp:3837`
+- `MainActivity` launched against `http://127.0.0.1:3737/channel`
+- `/channel` rendered fullscreen in WebView
+- long press OK opened `HiddenSettingsActivity`
+- settings screen showed visible D-pad focus
+- no `FATAL EXCEPTION` in the final smoke log
+
 ## Android TV Guidance
 
 Android phases should use:
@@ -229,7 +261,7 @@ Android phases should use:
 - Media3/ExoPlayer for MP4 and HLS.
 - Remote/D-pad safe hidden settings and recovery UI.
 
-Android dependency versions must be verified against official Android documentation before implementation.
+Android dependency versions must be verified against official Android documentation before implementation. WebViewAssetLoader and Media3 remain upcoming work; Phase 11 keeps the surface small so the TV shell can be tested before native playback and offline caching expand it.
 
 ## Security Notes
 

@@ -851,3 +851,96 @@ Notes:
 - Primary Phase 10 commit: `b7bd729`
 - Pushed: yes, to `origin/feature/channel-runtime-platform`
 - Note: this status update is recorded after the initial Phase 10 push without rewriting published history.
+
+## Phase 11 Summary
+
+Status: completed
+
+Goal:
+
+- Add the first native Android TV project foundation.
+- Load the web `/channel` runtime fullscreen inside WebView.
+- Configure Android TV launcher metadata and TV-safe manifest features.
+- Add native URL settings and recovery UI.
+- Verify the APK in Android Studio's Android TV emulator.
+
+What changed:
+
+- Added `android-tv/` Gradle project with wrapper files.
+- Added `.gitattributes` to keep `gradlew` executable-friendly across platforms.
+- Added Android application module `com.quran24.tv`.
+- Added `MainActivity` fullscreen WebView shell.
+- Added `HiddenSettingsActivity` for channel URL configuration.
+- Added `ChannelPreferences` shared-preference storage.
+- Added Android TV manifest configuration:
+  - Leanback launcher category
+  - TV banner/icon resources
+  - `android.software.leanback`
+  - no required touchscreen/faketouch
+  - internet and network state permissions
+  - local cleartext network security config for development channel URLs
+- Added WebView recovery handling for:
+  - main-frame load errors
+  - HTTP errors
+  - SSL errors
+  - renderer process exits
+- Added hidden settings access through Menu/Settings and long press OK/DPAD_CENTER.
+- Updated `/api/channel/status` to report Phase 11 and `androidTvShell: true`.
+- Updated README and docs for Android TV build and smoke instructions.
+
+Reference used from `livestreamquran-reference`:
+
+- Preserved the browser-rendered channel model.
+- Preserved the default local server port convention.
+- Preserved the idea that Quran rendering remains page images plus audio, not encoded video.
+
+What was intentionally not reused:
+
+- No Android work was done inside the reference repository.
+- No whole-Quran HLS/video conversion was introduced.
+- No native Media3 playback was added yet; this starts in Phase 13 after watchdog/bridge ingestion.
+- No production offline cache was added yet; this starts in Phase 14.
+
+## Phase 11 Verification
+
+Result: passed.
+
+Commands run:
+
+```powershell
+git status --short --branch
+git pull --ff-only
+cd android-tv
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.17.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+cd ..
+npm run build
+npm run test
+npm run lint
+$env:PORT = "3837"; node server/index.mjs
+```
+
+Observed results:
+
+- Android build passed with Android Gradle Plugin 9.2.0, Gradle 9.4.1, JDK 17, compile SDK 36, and target SDK 36.
+- Android lint passed for the debug variant.
+- `npm run build`: TypeScript type-check and Vite production build passed.
+- `npm run test`: 16 backend Node tests and 20 client Vitest tests passed.
+- `npm run lint`: server syntax check and client ESLint passed.
+- `GET /api/channel/status` returned `phase: 11` and `runtime.androidTvShell: true`.
+- Android Studio TV emulator smoke:
+  - device: `emulator-5554`
+  - `adb reverse tcp:3737 tcp:3837` mapped the app's local channel URL to the Quran24 server on port 3837.
+  - `MainActivity` loaded `http://127.0.0.1:3737/channel`.
+  - `/channel` rendered fullscreen in WebView.
+  - long press OK/DPAD_CENTER opened `HiddenSettingsActivity`.
+  - settings screen showed a visible D-pad focus state.
+  - final smoke log contained no `FATAL EXCEPTION`.
+
+Notes:
+
+- Port 3737 remains occupied by a pre-existing old Quran Broadcast server in this environment, so Quran24 smoke tests continue to use `PORT=3837` plus `adb reverse`.
+- The Android TV launcher on the emulator reserves `KEYCODE_MENU` for system behavior, so Phase 11 supports long press OK/DPAD_CENTER as the reliable hidden settings shortcut.
+- A local security tool such as Kaspersky may flag development actions like Gradle wrapper execution, APK install, `adb reverse`, hidden Node server processes, or emulator/device communication. Phase 11 did not add destructive commands or system-level persistence.
